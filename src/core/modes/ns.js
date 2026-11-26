@@ -1,5 +1,5 @@
-import { apiGet, isAbort } from '../services/api.js';
-import { pageItem, thumbWidth, safeUrl } from '../items.js';
+import { apiGet } from '../services/api.js';
+import { pageItem } from '../items.js';
 import icons from '../icons.js';
 import { msg, matches } from '../text.js';
 import { exactFirst, queryActions, userCanEdit } from '../results.js';
@@ -7,48 +7,6 @@ import { getSiteInfo } from '../services/siteinfo.js';
 import { specialPageItems } from './action.js';
 
 const LIMIT = 10;
-
-/**
- * Add each file's own thumbnail to File-namespace results, so the item can
- * show the image instead of the generic SVG icon. PageImages is for images
- * used on a page; imageinfo is the file itself, even for SVGs.
- *
- * @param {Object[]} items
- * @param {AbortSignal} signal
- * @return {Promise<Object[]>}
- */
-function withFileIcons( items, signal ) {
-	if ( !items.length ) {
-		return Promise.resolve( items );
-	}
-	return apiGet( {
-		action: 'query',
-		titles: items.map( ( it ) => it.title ).join( '|' ),
-		prop: 'imageinfo',
-		iiprop: 'url',
-		iiurlwidth: thumbWidth()
-	}, signal ).then( ( data ) => {
-		const q = data.query || {};
-		const normalized = new Map( ( q.normalized || [] ).map( ( n ) => [ n.from, n.to ] ) );
-		const redirects = new Map( ( q.redirects || [] ).map( ( r ) => [ r.from, r.to ] ) );
-		const renamed = ( map, title ) => map.has( title ) ? map.get( title ) : title;
-		const urls = new Map( ( q.pages || [] ).map( ( p ) => {
-			const info = p.imageinfo && p.imageinfo[ 0 ];
-			return [ p.title, info && ( info.thumburl || info.url ) ];
-		} ) );
-		return items.map( ( it ) => {
-			const title = renamed( redirects, renamed( normalized, it.title ) );
-			const url = safeUrl( urls.get( title ) );
-			return url ? Object.assign( {}, it, { iconUrl: url } ) : it;
-		} );
-	} ).catch( ( err ) => {
-		if ( isAbort( err ) ) {
-			throw err;
-		}
-		mw.log.warn( 'TACP:', err );
-		return items;
-	} );
-}
 
 /**
  * Sub-mode entered after picking a namespace: page search within it.
@@ -67,18 +25,14 @@ function namespaceSearch( ns, name ) {
 			const params = q ?
 				{ action: 'query', list: 'prefixsearch', pssearch: q, psnamespace: ns, pslimit: LIMIT } :
 				{ action: 'query', list: 'allpages', apnamespace: ns, aplimit: LIMIT };
-			const isFileNs = ns === mw.config.get( 'wgNamespaceIds' ).file;
 			// Special pages have no allpages; siteinfo also matches their aliases
 			const pages = ns === -1 ?
 				getSiteInfo().then( ( info ) => specialPageItems( info, q ) ) :
 				apiGet( params, signal ).then( ( data ) => ( data.query.prefixsearch || data.query.allpages || [] )
-					.map( ( p ) => pageItem( p.title, isFileNs ? { icon: icons.image } : null ) )
-					.filter( Boolean ) );
-			const withIcons = isFileNs ?
-				pages.then( ( found ) => withFileIcons( found, signal ) ) : pages;
+					.map( ( p ) => pageItem( p.title ) ).filter( Boolean ) );
 			// Go to or create the typed title, as outside the namespace
 			const t = q && mw.Title.makeTitle( ns, q );
-			return Promise.all( [ withIcons, userCanEdit() ] ).then( ( [ items, canEdit ] ) => [ {
+			return Promise.all( [ pages, userCanEdit() ] ).then( ( [ items, canEdit ] ) => [ {
 				id: 'pages',
 				label: msg( 'tacp-group-pages' ),
 				items: t ? exactFirst( items, t.getPrefixedText() ) : items

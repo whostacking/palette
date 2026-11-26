@@ -11,6 +11,7 @@ import langMode from '../src/core/modes/lang.js';
 import aboutMode from '../src/core/modes/about.js';
 import { createRegistry, defineMode } from '../src/core/services/registry.js';
 import { addRecent, getRecent } from '../src/core/services/recent.js';
+import tacpIcons from '../src/core/icons.js';
 
 const context = { title: 'Main_Page', namespace: 0, articleId: 1 };
 const signal = () => new AbortController().signal;
@@ -53,39 +54,29 @@ describe( '/ns', () => {
 		expect( labels( pages ) ).toEqual( [ 'Bob' ] );
 	} );
 
-	it( 'loads the image of each file found in the File namespace', async () => {
+	it( 'gives each file found in the File namespace an image URL', async () => {
 		const fetch = mockFetch( {
 			'list=prefixsearch': { query: { prefixsearch: [
 				{ title: 'File:Apple.jpg' }, { title: 'File:Pear.svg' }
-			] } },
-			'prop=imageinfo': { query: { pages: [
-				{ title: 'File:Apple.jpg', imageinfo: [ {
-					thumburl: '//img/apple.jpg', url: '//img/apple-full.jpg'
-				} ] },
-				{ title: 'File:Pear.svg', imageinfo: [ { url: '//img/pear.svg' } ] }
 			] } }
 		} );
 		const sub = nsMode.getResults( 'file' )[ 0 ].items[ 0 ].mode;
 		const [ pages ] = await sub.getResults( 'apple', context, signal() );
 		expect( labels( pages ) ).toEqual( [ 'Apple.jpg', 'Pear.svg' ] );
-		const info = decodeURIComponent( fetch.mock.calls[ 1 ][ 0 ] );
-		expect( info ).toContain( 'prop=imageinfo' );
-		expect( info ).toContain( 'iiurlwidth=40' );
-		expect( info ).toContain( 'titles=File:Apple.jpg|File:Pear.svg' );
-		expect( pages.items[ 0 ].iconUrl ).toBe( 'http://img/apple.jpg' );
-		expect( pages.items[ 1 ].iconUrl ).toBe( 'http://img/pear.svg' );
+		expect( fetch ).toHaveBeenCalledTimes( 1 );
+		pages.items.forEach( ( item, i ) => {
+			expect( item.icon ).toBe( tacpIcons.image );
+			expect( decodeURIComponent( item.iconUrl ) ).toContain(
+				'Special:Redirect/file/' + ( i === 0 ? 'Apple.jpg' : 'Pear.svg' ) );
+			expect( item.iconUrl ).toContain( 'width=40' );
+		} );
 	} );
 
-	it( 'keeps file results when their image info cannot be fetched', async () => {
-		mockFetch( {
-			'list=prefixsearch': { query: { prefixsearch: [ { title: 'File:Apple.jpg' } ] } },
-			'prop=imageinfo': new Error( 'bad' )
-		} );
-		const sub = nsMode.getResults( 'file' )[ 0 ].items[ 0 ].mode;
-		const [ pages ] = await sub.getResults( 'apple', context, signal() );
-		expect( labels( pages ) ).toEqual( [ 'Apple.jpg' ] );
+	it( 'does not add images to results outside the File namespace', async () => {
+		mockFetch( { 'list=prefixsearch': { query: { prefixsearch: [ { title: 'User:Alice' } ] } } } );
+		const sub = nsMode.getResults( 'user' )[ 0 ].items[ 0 ].mode;
+		const [ pages ] = await sub.getResults( 'ali', context, signal() );
 		expect( pages.items[ 0 ].iconUrl ).toBeUndefined();
-		expect( mw.log.warn ).toHaveBeenCalled();
 	} );
 } );
 

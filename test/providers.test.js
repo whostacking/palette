@@ -8,7 +8,7 @@ import { createRegistry, defineMode } from '../src/core/services/registry.js';
 import { builtinCommands } from '../src/core/providers/commands.js';
 import { addRecent, getRecent, clearRecent } from '../src/core/services/recent.js';
 import icons from '../src/core/icons.js';
-import { thumbWidth } from '../src/core/items.js';
+import { pageItem, thumbWidth } from '../src/core/items.js';
 import { sharpThumb } from '../src/core/services/thumbs.js';
 import { newController } from '../src/core/services/api.js';
 
@@ -92,12 +92,12 @@ describe( 'recent items', () => {
 describe( 'getGroups', () => {
 	const signal = () => new AbortController().signal;
 
-	it( 'shows recent, related and suggested commands for an empty query', async () => {
+	it( 'shows recent and related, but no commands, for an empty query', async () => {
 		mockFetch( { 'meta=siteinfo': siteinfo, morelike: { query: { pages: [ { title: 'Rel', index: 1 } ] } } } );
 		addRecent( 'Seen' );
 		const groups = await getGroups( { query: '', mode: null, context, registry: registry() }, signal() );
-		expect( groups.map( ( g ) => g.label ) ).toEqual( [ 'Recent', 'Related', 'Commands' ] );
-		expect( groups[ 2 ].items.map( ( i ) => i.label ) ).toEqual( [ 'Edit this page', 'View history', 'Random page', 'Discussion' ] );
+		expect( groups.map( ( g ) => g.label ) ).toEqual( [ 'Recent', 'Related' ] );
+		expect( groups[ 1 ].items.map( ( i ) => i.label ) ).toEqual( [ 'Rel' ] );
 	} );
 
 	it( 'shows results, matching commands and query actions while typing', async () => {
@@ -169,6 +169,18 @@ describe( 'search box behaviour', () => {
 		expect( exactFirst( items, 'apple' )[ 0 ].title ).toBe( 'Apple' );
 	} );
 
+	it( 'shows a redirect whose title only differs in capitalisation', async () => {
+		mockFetch( {
+			'meta=siteinfo': siteinfo,
+			'action=opensearch': [ 'passive block', [ 'Passive block' ], [ '' ], [] ],
+			'list=search': { query: { search: [] } },
+			'list=allpages': { query: { allpages: [ { title: 'Passive Block' } ] } },
+			'redirects=1': { query: { redirects: [ { from: 'Passive Block', to: 'Other page' } ] } }
+		} );
+		const groups = await getGroups( { query: 'passive block', mode: null, context, registry: registry() }, signal() );
+		expect( groups[ 0 ].items[ 0 ] ).toMatchObject( { title: 'Other page', redirectFrom: 'Passive Block' } );
+	} );
+
 	it( 'adds CirrusSearch full text and its suggestion while typing', async () => {
 		mockFetch( {
 			'meta=siteinfo': siteinfo,
@@ -203,6 +215,16 @@ describe( 'search box behaviour', () => {
 		const fetch = mockFetch( { 'action=opensearch': [ 'ap', [ 'Apple' ], [ '' ], [] ] } );
 		await getGroups( { query: 'ap', mode: null, context, registry: registry() }, signal() );
 		expect( fetch.mock.calls.some( ( c ) => c[ 0 ].includes( 'list=search' ) ) ).toBe( false );
+	} );
+} );
+
+describe( 'page items', () => {
+	it( 'gives file results from any provider an image in the icon slot', () => {
+		const item = pageItem( 'File:Apple.jpg' );
+		expect( item.icon ).toBe( icons.image );
+		expect( decodeURIComponent( item.iconUrl ) ).toContain( 'Special:Redirect/file/Apple.jpg' );
+		expect( item.iconUrl ).toContain( 'width=40' );
+		expect( pageItem( 'Apple' ).iconUrl ).toBeUndefined();
 	} );
 } );
 

@@ -5,9 +5,6 @@ import { defineCommand } from '../services/registry.js';
 const go = ( title, params ) => location.assign( mw.util.getUrl( title, params ) );
 const isTalk = ( ns ) => ns >= 0 && ns % 2 === 1;
 
-/** Shown on an empty query: three common commands and one that depends on the page */
-export const SUGGESTED = [ 'tacp-cmd-edit', 'tacp-cmd-history', 'tacp-cmd-random', 'tacp-cmd-talk', 'tacp-cmd-subject' ];
-
 export const builtinCommands = [
 	{
 		id: 'tacp-cmd-edit',

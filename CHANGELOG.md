@@ -3,6 +3,15 @@
 All notable changes to TACP. Sections per release: Added, Changed, Deprecated,
 Removed, Fixed. Every pull request that changes `src/` adds a line here.
 
+## Unreleased
+
+### Changed
+- The "Commands" group is no longer shown on an empty input; commands still appear while typing and under `/`.
+
+### Fixed
+- File results now show the file's own image in the icon slot, whatever search provider found them.
+- Searching a redirect in a different capitalisation (e.g. "passive block" for "Passive Block") now finds it.
+
 ## 0.1.0-rc.13 — 2026-11-25
 
 ### Added

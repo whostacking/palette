@@ -62,6 +62,7 @@ export function pageItem( title, extra ) {
 	}
 	const ns = t.getNamespaceId();
 	const prefixed = t.getPrefixedText();
+	const isFile = ns === mw.config.get( 'wgNamespaceIds' ).file;
 	const actions = ns < 0 ? [] : [
 		{ id: 'edit', label: msg( 'tacp-action-edit' ), icon: icons.edit, url: t.getUrl( { action: 'edit' } ) },
 		{ id: 'history', label: msg( 'tacp-action-history' ), icon: icons.history, url: t.getUrl( { action: 'history' } ) }
@@ -72,7 +73,11 @@ export function pageItem( title, extra ) {
 		badge: ns === 0 ? '' : mw.config.get( 'wgFormattedNamespaces' )[ ns ] || '',
 		title: prefixed,
 		url: t.getUrl(),
-		icon: ns < 0 ? icons.specialPages : icons.article,
+		icon: isFile ? icons.image : ns < 0 ? icons.specialPages : icons.article,
 		actions
-	}, extra );
+	}, isFile ? {
+		// Special:Redirect/file renders a thumbnail of the file itself. It
+		// needs no extra API request and works for every provider's results.
+		iconUrl: mw.util.getUrl( 'Special:Redirect/file/' + t.getMainText(), { width: thumbWidth() } )
+	} : null, extra );
 }

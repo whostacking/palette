@@ -6,7 +6,7 @@ import { getRecent } from './services/recent.js';
 import { searchTitles, searchText } from './providers/search.js';
 import { getSiteInfo } from './services/siteinfo.js';
 import { getRelated } from './providers/related.js';
-import { SUGGESTED } from './providers/commands.js';
+import { redirectFor } from './services/redirects.js';
 
 const RECENT_SHOWN = 5;
 // Full-text search is heavier than title search; skip it for very short input
@@ -168,6 +168,34 @@ export function exactFirst( items, query ) {
 }
 
 /**
+ * Fold a case-insensitive redirect into the title results. Without this, a
+ * redirect whose title differs in capitalisation from what was typed is
+ * missing from the list, not merely lower down it.
+ *
+ * @param {Object[]} items
+ * @param {{from: string, to: string}|null} redirect
+ * @return {Object[]}
+ */
+function withRedirect( items, redirect ) {
+	if ( !redirect ) {
+		return items;
+	}
+	const target = mw.Title.newFromText( redirect.to );
+	const same = ( title ) => {
+		const other = title && mw.Title.newFromText( title );
+		return !!other && !!target &&
+			other.getPrefixedText().toLowerCase() === target.getPrefixedText().toLowerCase();
+	};
+	const i = items.findIndex( ( it ) => same( it.title ) );
+	if ( i >= 0 ) {
+		return items.map( ( it, n ) => ( n === i && !it.redirectFrom ?
+			Object.assign( {}, it, { redirectFrom: redirect.from } ) : it ) );
+	}
+	const found = pageItem( redirect.to, { redirectFrom: redirect.from } );
+	return found ? [ found ].concat( items ) : items;
+}
+
+/**
  * CirrusSearch full text, only when the wiki has it and the input is long enough.
  *
  * @param {string} query
@@ -238,26 +266,24 @@ export function getGroups( { query, mode, context, registry }, signal ) {
 	} else if ( !query.trim() ) {
 		pending = soft( getRelated( context, signal ) ).then( ( related ) => [
 			group( 'recent', getRecent().slice( 0, RECENT_SHOWN ).map( ( e ) => pageItem( e.title ) ).filter( Boolean ) ),
-			group( 'related', related ),
-			group( 'commands', SUGGESTED
-				.map( ( id ) => commands.find( ( c ) => c.id === id ) )
-				.filter( Boolean )
-				.map( ( c ) => commandItem( c, context ) ) )
+			group( 'related', related )
 		] );
 	} else {
 		const q = query.trim();
-		pending = Promise.all( [ soft( searchTitles( q, signal ) ), userCanEdit(), fullText( q, signal ) ] )
-			.then( ( [ results, canEdit, full ] ) => {
-				const seen = new Set( results.map( ( it ) => it.title.toLowerCase() ) );
-				return [
-					group( 'results', exactFirst( results, q ) ),
-					group( 'fulltext', full.items.filter( ( it ) => !seen.has( it.title.toLowerCase() ) ) ),
-					group( 'commands', commands
-						.filter( ( c ) => matches( text( c.label ), query ) )
-						.map( ( c ) => commandItem( c, context ) ) ),
-					group( 'query', queryActions( query, canEdit, full.suggestion ) )
-				];
-			} );
+		pending = Promise.all( [
+			soft( searchTitles( q, signal ) ), userCanEdit(), fullText( q, signal ), redirectFor( q, signal )
+		] ).then( ( [ found, canEdit, full, redirect ] ) => {
+			const results = withRedirect( found, redirect );
+			const seen = new Set( results.map( ( it ) => it.title.toLowerCase() ) );
+			return [
+				group( 'results', exactFirst( results, q ) ),
+				group( 'fulltext', full.items.filter( ( it ) => !seen.has( it.title.toLowerCase() ) ) ),
+				group( 'commands', commands
+					.filter( ( c ) => matches( text( c.label ), query ) )
+					.map( ( c ) => commandItem( c, context ) ) ),
+				group( 'query', queryActions( query, canEdit, full.suggestion ) )
+			];
+		} );
 	}
 	return pending.then( ( list ) => normalizeGroups( list, 'tacp' ) );
 }
