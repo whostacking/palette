@@ -8,7 +8,7 @@ import { readMessages } from './messages.js';
 
 const pkg = JSON.parse( readFileSync( 'package.json', 'utf8' ) );
 const sha = ( process.env.GITHUB_SHA || execSync( 'git rev-parse HEAD' ).toString() ).trim().slice( 0, 7 );
-const header = `/*! TACP v${ pkg.version } (${ sha }) | MIT License | https://github.com/songnguxyz/tacp-gadget
+const header = `/*! TACP v${ pkg.version } (${ sha }) | MIT License | https://github.com/whostacking/palette
  * Built file: do not edit on-wiki. Edit the repository and redeploy. */
 `;
 

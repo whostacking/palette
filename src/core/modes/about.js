@@ -2,7 +2,7 @@
 import icons from '../icons.js';
 import { msg, matches } from '../text.js';
 
-const REPO = 'https://github.com/songnguxyz/tacp-gadget';
+const REPO = 'https://github.com/whostacking/palette';
 
 export default {
 	id: 'tacp-about',
