@@ -7,6 +7,7 @@ Removed, Fixed. Every pull request that changes `src/` adds a line here.
 
 ### Changed
 - The "Commands" group is no longer shown on an empty input; commands still appear while typing and under `/`.
+- Result items hide their secondary actions on narrow screens.
 
 ### Fixed
 - File results now show the file's own image as a standard `cdx-thumbnail`, whatever search provider found them. Audio files use the volume icon instead.
