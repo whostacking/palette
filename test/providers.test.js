@@ -225,18 +225,27 @@ describe( 'search box behaviour', () => {
 } );
 
 describe( 'page items', () => {
-	it( 'gives file results from any provider an image in the icon slot', () => {
+	it( 'gives file results from any provider a standard thumbnail', () => {
 		const item = pageItem( 'File:Apple.jpg' );
 		expect( item.icon ).toBe( icons.image );
-		expect( decodeURIComponent( item.iconUrl ) ).toContain( 'Special:Redirect/file/Apple.jpg' );
-		expect( item.iconUrl ).toContain( 'width=40' );
-		expect( pageItem( 'Apple' ).iconUrl ).toBeUndefined();
+		expect( decodeURIComponent( item.thumbnail.url ) ).toContain( 'Special:Redirect/file/Apple.jpg' );
+		expect( item.thumbnail.url ).toContain( 'width=40' );
+		expect( item.thumbnail.width ).toBe( 40 );
+		expect( pageItem( 'Apple' ).thumbnail ).toBeUndefined();
 	} );
 
-	it( 'uses the volume icon for audio files, with no image URL', () => {
+	it( 'keeps a thumbnail supplied by the provider, including an explicit null', () => {
+		const found = pageItem( 'File:Apple.jpg', { thumbnail: { url: '//img/apple.jpg', width: 60 } } );
+		expect( found.thumbnail ).toEqual( { url: '//img/apple.jpg', width: 60 } );
+		expect( pageItem( 'File:Apple.jpg', { thumbnail: null } ).thumbnail ).toEqual( {
+			url: expect.any( String ), width: 40
+		} );
+	} );
+
+	it( 'uses the volume icon for audio files, with no thumbnail', () => {
 		const mp3 = pageItem( 'File:Sound.MP3' );
 		expect( mp3.icon ).toBe( icons.volumeUp );
-		expect( mp3.iconUrl ).toBeUndefined();
+		expect( mp3.thumbnail ).toBeUndefined();
 		expect( pageItem( 'File:Sound.ogg' ).icon ).toBe( icons.volumeUp );
 	} );
 } );

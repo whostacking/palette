@@ -69,7 +69,7 @@ export function pageItem( title, extra ) {
 		{ id: 'edit', label: msg( 'tacp-action-edit' ), icon: icons.edit, url: t.getUrl( { action: 'edit' } ) },
 		{ id: 'history', label: msg( 'tacp-action-history' ), icon: icons.history, url: t.getUrl( { action: 'history' } ) }
 	];
-	return Object.assign( {
+	const item = Object.assign( {
 		id: 'page:' + prefixed,
 		label: ns === 0 ? prefixed : t.getMainText(),
 		badge: ns === 0 ? '' : mw.config.get( 'wgFormattedNamespaces' )[ ns ] || '',
@@ -77,9 +77,15 @@ export function pageItem( title, extra ) {
 		url: t.getUrl(),
 		icon: isAudio ? icons.volumeUp : isFile ? icons.image : ns < 0 ? icons.specialPages : icons.article,
 		actions
-	}, isFile && !isAudio ? {
-		// Special:Redirect/file renders a thumbnail of the file itself. It
-		// needs no extra API request and works for every provider's results.
-		iconUrl: mw.util.getUrl( 'Special:Redirect/file/' + t.getMainText(), { width: thumbWidth() } )
-	} : null, extra );
+	}, extra );
+	if ( isFile && !isAudio && !item.thumbnail ) {
+		// Special:Redirect/file renders a thumbnail of the file itself, with
+		// no extra API request. Use the standard thumbnail so the icon keeps
+		// the same box and border as every other thumbnail.
+		item.thumbnail = {
+			url: mw.util.getUrl( 'Special:Redirect/file/' + t.getMainText(), { width: thumbWidth() } ),
+			width: thumbWidth()
+		};
+	}
+	return item;
 }

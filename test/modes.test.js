@@ -54,7 +54,7 @@ describe( '/ns', () => {
 		expect( labels( pages ) ).toEqual( [ 'Bob' ] );
 	} );
 
-	it( 'gives each file found in the File namespace an image URL', async () => {
+	it( 'gives each file found in the File namespace a thumbnail', async () => {
 		const fetch = mockFetch( {
 			'list=prefixsearch': { query: { prefixsearch: [
 				{ title: 'File:Apple.jpg' }, { title: 'File:Pear.svg' }
@@ -66,17 +66,17 @@ describe( '/ns', () => {
 		expect( fetch ).toHaveBeenCalledTimes( 1 );
 		pages.items.forEach( ( item, i ) => {
 			expect( item.icon ).toBe( tacpIcons.image );
-			expect( decodeURIComponent( item.iconUrl ) ).toContain(
+			expect( decodeURIComponent( item.thumbnail.url ) ).toContain(
 				'Special:Redirect/file/' + ( i === 0 ? 'Apple.jpg' : 'Pear.svg' ) );
-			expect( item.iconUrl ).toContain( 'width=40' );
+			expect( item.thumbnail.url ).toContain( 'width=40' );
 		} );
 	} );
 
-	it( 'does not add images to results outside the File namespace', async () => {
+	it( 'does not add thumbnails to results outside the File namespace', async () => {
 		mockFetch( { 'list=prefixsearch': { query: { prefixsearch: [ { title: 'User:Alice' } ] } } } );
 		const sub = nsMode.getResults( 'user' )[ 0 ].items[ 0 ].mode;
 		const [ pages ] = await sub.getResults( 'ali', context, signal() );
-		expect( pages.items[ 0 ].iconUrl ).toBeUndefined();
+		expect( pages.items[ 0 ].thumbnail ).toBeUndefined();
 	} );
 } );
 
