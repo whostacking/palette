@@ -170,15 +170,21 @@ describe( 'search box behaviour', () => {
 	} );
 
 	it( 'shows a redirect whose title only differs in capitalisation', async () => {
-		mockFetch( {
+		const fetch = mockFetch( {
 			'meta=siteinfo': siteinfo,
-			'action=opensearch': [ 'passive block', [ 'Passive block' ], [ '' ], [] ],
+			'action=opensearch': [ 'passive block', [], [ '' ], [] ],
 			'list=search': { query: { search: [] } },
-			'list=allpages': { query: { allpages: [ { title: 'Passive Block' } ] } },
-			'redirects=1': { query: { redirects: [ { from: 'Passive Block', to: 'Other page' } ] } }
+			'list=allpages': { query: { allpages: [ { title: 'Passive Blocked' }, { title: 'Passive Block' } ] } },
+			'redirects=1': { query: { redirects: [ { from: 'Passive Block', to: 'Category:Passive-Blocked Fish' } ] } }
 		} );
 		const groups = await getGroups( { query: 'passive block', mode: null, context, registry: registry() }, signal() );
-		expect( groups[ 0 ].items[ 0 ] ).toMatchObject( { title: 'Other page', redirectFrom: 'Passive Block' } );
+		expect( groups[ 0 ].items[ 0 ] ).toMatchObject( {
+			title: 'Category:Passive-Blocked Fish', redirectFrom: 'Passive Block'
+		} );
+		const lookup = decodeURIComponent( fetch.mock.calls.find(
+			( c ) => c[ 0 ].includes( 'list=allpages' ) )[ 0 ] );
+		expect( lookup ).toContain( 'apprefix=passive' );
+		expect( lookup ).toContain( 'apfilterredir=redirects' );
 	} );
 
 	it( 'adds CirrusSearch full text and its suggestion while typing', async () => {
@@ -225,6 +231,13 @@ describe( 'page items', () => {
 		expect( decodeURIComponent( item.iconUrl ) ).toContain( 'Special:Redirect/file/Apple.jpg' );
 		expect( item.iconUrl ).toContain( 'width=40' );
 		expect( pageItem( 'Apple' ).iconUrl ).toBeUndefined();
+	} );
+
+	it( 'uses the volume icon for audio files, with no image URL', () => {
+		const mp3 = pageItem( 'File:Sound.MP3' );
+		expect( mp3.icon ).toBe( icons.volumeUp );
+		expect( mp3.iconUrl ).toBeUndefined();
+		expect( pageItem( 'File:Sound.ogg' ).icon ).toBe( icons.volumeUp );
 	} );
 } );
 

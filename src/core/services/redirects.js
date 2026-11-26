@@ -29,17 +29,21 @@ export function redirectFor( text, signal ) {
 		return Promise.resolve( cache.get( key ) );
 	}
 	const t = mw.Title.newFromText( q );
-	if ( !t || t.getNamespaceId() < 0 ) {
+	const word = t && t.getMainText().split( /\s+/ )[ 0 ];
+	if ( !t || t.getNamespaceId() < 0 || !word ) {
 		cache.set( key, null );
 		return Promise.resolve( null );
 	}
 	return apiGet( {
 		action: 'query',
 		list: 'allpages',
-		apprefix: t.getMainText(),
+		// allpages' prefix is case-sensitive beyond the first character, so
+		// "Passive block" misses "Passive Block". Look up just the first word
+		// and compare the whole title below, without case.
+		apprefix: word.toLowerCase(),
 		apnamespace: t.getNamespaceId(),
 		apfilterredir: 'redirects',
-		aplimit: 10
+		aplimit: 500
 	}, signal ).then( ( data ) => {
 		const titles = ( ( data.query || {} ).allpages || [] ).map( ( p ) => p.title );
 		const from = titles.filter( ( title ) => same( title, q ) )[ 0 ];

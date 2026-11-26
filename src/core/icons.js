@@ -6,7 +6,7 @@ import {
 	cdxIconNext, cdxIconRecentChanges, cdxIconReload, cdxIconSearch, cdxIconSettings,
 	cdxIconSpecialPages, cdxIconSpeechBubbles, cdxIconTag, cdxIconTrash, cdxIconUserAvatar,
 	cdxIconUserContributions, cdxIconUserTalk, cdxIconAlert, cdxIconLanguage,
-	cdxIconCode, cdxIconInfo, cdxIconLinkExternal
+	cdxIconCode, cdxIconInfo, cdxIconLinkExternal, cdxIconVolumeUp
 } from '@wikimedia/codex-icons';
 
 export default Object.freeze( {
@@ -42,5 +42,6 @@ export default Object.freeze( {
 	trash: cdxIconTrash,
 	user: cdxIconUserAvatar,
 	userContributions: cdxIconUserContributions,
-	userTalk: cdxIconUserTalk
+	userTalk: cdxIconUserTalk,
+	volumeUp: cdxIconVolumeUp
 } );

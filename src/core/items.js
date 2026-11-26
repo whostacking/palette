@@ -63,6 +63,8 @@ export function pageItem( title, extra ) {
 	const ns = t.getNamespaceId();
 	const prefixed = t.getPrefixedText();
 	const isFile = ns === mw.config.get( 'wgNamespaceIds' ).file;
+	// Audio files have no useful still image; show a speaker instead
+	const isAudio = isFile && /\.(?:mp3|ogg|oga|wav|flac|m4a|aac|opus)$/i.test( t.getMainText() );
 	const actions = ns < 0 ? [] : [
 		{ id: 'edit', label: msg( 'tacp-action-edit' ), icon: icons.edit, url: t.getUrl( { action: 'edit' } ) },
 		{ id: 'history', label: msg( 'tacp-action-history' ), icon: icons.history, url: t.getUrl( { action: 'history' } ) }
@@ -73,9 +75,9 @@ export function pageItem( title, extra ) {
 		badge: ns === 0 ? '' : mw.config.get( 'wgFormattedNamespaces' )[ ns ] || '',
 		title: prefixed,
 		url: t.getUrl(),
-		icon: isFile ? icons.image : ns < 0 ? icons.specialPages : icons.article,
+		icon: isAudio ? icons.volumeUp : isFile ? icons.image : ns < 0 ? icons.specialPages : icons.article,
 		actions
-	}, isFile ? {
+	}, isFile && !isAudio ? {
 		// Special:Redirect/file renders a thumbnail of the file itself. It
 		// needs no extra API request and works for every provider's results.
 		iconUrl: mw.util.getUrl( 'Special:Redirect/file/' + t.getMainText(), { width: thumbWidth() } )
