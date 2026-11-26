@@ -1,0 +1,64 @@
+name: CDN
+
+# The CDN half of the upstream release workflow, on its own trigger: every
+# push to main rebuilds the jsDelivr files and commits them to the cdn branch.
+# No release tag (and no package.json version match) is needed.
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cdn
+  cancel-in-progress: false
+
+jobs:
+  cdn:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Commit the CDN files to the cdn branch
+        env:
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898088+github-actions[bot]@users.noreply.github.com'
+          label="${GITHUB_SHA::7}"
+          tree="$RUNNER_TEMP/cdn"
+          if git ls-remote --exit-code --heads origin cdn > /dev/null; then
+            git fetch --depth 1 origin cdn
+            git worktree add --detach "$tree" FETCH_HEAD
+          else
+            git worktree add --detach "$tree"
+            git -C "$tree" checkout --orphan cdn
+          fi
+          git -C "$tree" rm -rfq --ignore-unmatch .
+          # The same four files the release attaches as assets
+          cp dist/TACP-cdn-core.css dist/TACP-cdn-core.js dist/TACP-cdn-core.rtl.css dist/TACP-cdn.js "$tree/"
+          cp LICENSE THIRD_PARTY_NOTICES.md "$tree/"
+          printf '# TACP %s for jsDelivr\n\nBuilt files only: see https://github.com/%s/blob/main/docs/deploy.md\n' \
+            "$label" "$REPO" > "$tree/README.md"
+          git -C "$tree" add -A
+          git -C "$tree" diff --cached --quiet || git -C "$tree" commit -qm "TACP $label"
+          git -C "$tree" push origin HEAD:refs/heads/cdn
+          sha=$(git -C "$tree" rev-parse HEAD)
+          echo "::notice::Pin this build: https://cdn.jsdelivr.net/gh/$REPO@$sha/TACP-cdn.js"
+          echo "::notice::Latest build: https://cdn.jsdelivr.net/gh/$REPO@cdn/TACP-cdn.js"
+          # Wikis loading @cdn (latest) get the build now instead of within
+          # jsDelivr's 12-hour branch cache. The core files first, so a new loader
+          # never meets an old core. A failed purge only delays them.
+          for f in TACP-cdn-core.js TACP-cdn-core.css TACP-cdn-core.rtl.css TACP-cdn.js; do
+            curl -fsS -o /dev/null "https://purge.jsdelivr.net/gh/$REPO@cdn/$f" ||
+              echo "::warning::jsDelivr purge failed for $f"
+          done

@@ -40,8 +40,8 @@ searches only that namespace, like `/ns`; `{{` does the same for templates.
 ## Trying it without installing
 
 Open any wiki page (MediaWiki 1.43 or later, not Citizen), paste the
-`mw.loader.load( … )` line from a release's notes into the browser console and
-press Enter: TACP loads from jsDelivr and runs until the page is reloaded. It
+`mw.loader.load( … )` line from the CDN workflow's notice into the browser console
+and press Enter: TACP loads from jsDelivr and runs until the page is reloaded. It
 does not start where the gadget is already on, nor on wikis whose Content
 Security Policy blocks `cdn.jsdelivr.net`.
 

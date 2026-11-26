@@ -1,8 +1,8 @@
 # Deploying TACP
 
-A release is made by pushing a tag `vX.Y.Z` (or `vX.Y.Z-rc.N`) that matches
-`package.json`, or by running the Release workflow by hand with that tag (it then
-creates the tag on the chosen branch). The workflow builds, creates the GitHub release
+A release is made by pushing a tag `vX.Y.Z` (or `vX.Y.Z-rc.N`), or by running
+the Release workflow by hand with that tag (it then creates the tag on the chosen
+branch). The workflow builds, creates the GitHub release
 (pre-release for `-rc`) and attaches these files:
 
 | File | Wiki page |
@@ -73,29 +73,30 @@ MediaWiki namespace).
 ## Loading from jsDelivr
 
 A wiki can load TACP from jsDelivr instead of installing the gadget, as scripts
-on the Miraheze Developers Wiki are loaded. Each release commits its CDN files
-to the `cdn` branch and adds the line to paste, with that commit, to the
-release notes:
+on the Miraheze Developers Wiki are loaded. The `cdn` workflow in
+`.github/workflows/cdn.yml` builds and commits the CDN files to the `cdn`
+branch on every push to `main` (or when run by hand). Its run log prints the
+commit to paste:
 
 ```js
 // MediaWiki:Common.js (whole wiki), or Special:MyPage/common.js (yourself)
 window.tacpConfig = {}; // optional settings, same keys as Gadget-TACP-config.json
-mw.loader.load( 'https://cdn.jsdelivr.net/gh/songnguxyz/tacp-gadget@<commit>/TACP-cdn.js' );
+mw.loader.load( 'https://cdn.jsdelivr.net/gh/whostacking/palette@<commit>/TACP-cdn.js' );
 ```
 
 Or as a gadget of one line: put the `mw.loader.load` line in
 `MediaWiki:Gadget-TACP.js` and define it without dependencies, e.g.
 `* TACP[ResourceLoader|default]|TACP.js`.
 
-- Pin the commit from the release notes. A commit's files never change, so
-  nothing reaches the wiki until someone edits that line. To update, replace
+- Pin the commit from the CDN workflow's notice. A commit's files never change,
+  so nothing reaches the wiki until someone edits that line. To update, replace
   the commit.
-- To always get the latest release, load `@cdn` (the branch) instead of a
-  commit. Every release, release candidates included, then reaches the wiki
-  without anyone reviewing it. Each release purges jsDelivr's cache of the
-  branch; if that fails, a release can take up to 12 hours to arrive, and in
-  the meantime the loader and the core may come from different releases. Never
-  use a tag or `@latest`: tags are not on the `cdn` branch.
+- To always get the latest build, load `@cdn` (the branch) instead of a commit.
+  Every push to `main` then reaches the wiki without anyone reviewing it. Each
+  build purges jsDelivr's cache of the branch; if that fails, a build can take
+  up to 12 hours to arrive, and in the meantime the loader and the core may
+  come from different builds. Never use a tag or `@latest`: tags are not on
+  the `cdn` branch.
 - `TACP-cdn.js` (about 3 KB gzipped) loads on every page. The core and its
   styles load from the same commit the first time the palette opens; the
   right-to-left stylesheet is chosen from the page's direction, since
