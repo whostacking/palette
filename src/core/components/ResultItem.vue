@@ -22,7 +22,14 @@
 			:thumbnail="thumbUrl ? { url: thumbUrl } : null"
 		></cdx-thumbnail>
 		<span v-else class="tacp-item__icon">
-			<cdx-icon :icon="item.icon || defaultIcon"></cdx-icon>
+			<img
+				v-if="item.iconUrl && item.iconUrl !== failedIconUrl"
+				class="tacp-item__icon-image"
+				:src="item.iconUrl"
+				alt=""
+				@error="failedIconUrl = item.iconUrl"
+			>
+			<cdx-icon v-else :icon="item.icon || defaultIcon"></cdx-icon>
 		</span>
 		<span class="tacp-item__text">
 			<span class="tacp-item__title">
@@ -75,6 +82,9 @@ export default defineComponent( {
 		const root = ref( null );
 		// Set once the image has loaded; until then CdxThumbnail shows its placeholder
 		const thumbUrl = ref( null );
+		// A file that cannot be shown as an image (e.g. audio) keeps its SVG icon.
+		// Storing the URL, not a boolean, resets the fallback when the row is reused.
+		const failedIconUrl = ref( null );
 		let observer = null;
 
 		let sharp = false;
@@ -124,6 +134,7 @@ export default defineComponent( {
 		return {
 			root,
 			thumbUrl,
+			failedIconUrl,
 			defaultIcon: icons.article,
 			// Only items that open their url (App.vue activate()); modes, queries and commands do not
 			href: computed( () => {

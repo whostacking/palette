@@ -134,6 +134,16 @@ describe( 'getGroups', () => {
 		expect( groups[ 0 ].items[ 1 ].actions[ 0 ] ).toMatchObject( { icon: icons.edit, url: 'http://localhost:3000/wiki/X' } );
 	} );
 
+	it( 'keeps only safe icon image URLs', () => {
+		const [ g ] = normalizeGroups( [ { items: [
+			{ label: 'File', iconUrl: '//img/file.jpg' },
+			// eslint-disable-next-line no-script-url -- must be dropped
+			{ label: 'Bad', iconUrl: 'javascript:alert(1)' }
+		] } ], 'x' );
+		expect( g.items[ 0 ].iconUrl ).toBe( 'http://img/file.jpg' );
+		expect( g.items[ 1 ].iconUrl ).toBe( null );
+	} );
+
 	it( 'drops empty groups and garbage', () => {
 		expect( normalizeGroups( 'nope', 'x' ) ).toEqual( [] );
 		expect( normalizeGroups( [ { label: 'Empty', items: [] } ], 'x' ) ).toEqual( [] );
@@ -150,6 +160,13 @@ describe( 'search box behaviour', () => {
 		expect( exactFirst( items, 'apple' ).map( ( i ) => i.title ) ).toEqual( [ 'Apple', 'Apple pie', 'Malus' ] );
 		expect( exactFirst( items, 'crab apple' )[ 0 ].title ).toBe( 'Malus' );
 		expect( exactFirst( items, 'pear' ) ).toBe( items );
+	} );
+
+	it( 'matches exact titles and redirects regardless of case', () => {
+		const items = [ { title: 'Apple' }, { title: 'Passive block', redirectFrom: 'Passive Block' } ];
+		expect( exactFirst( items, 'passive block' )[ 0 ].title ).toBe( 'Passive block' );
+		expect( exactFirst( items, 'PASSIVE BLOCK' )[ 0 ].title ).toBe( 'Passive block' );
+		expect( exactFirst( items, 'apple' )[ 0 ].title ).toBe( 'Apple' );
 	} );
 
 	it( 'adds CirrusSearch full text and its suggestion while typing', async () => {
@@ -169,6 +186,17 @@ describe( 'search box behaviour', () => {
 		expect( groups[ 1 ].items ).toHaveLength( 1 );
 		expect( groups[ 1 ].items[ 0 ] ).toMatchObject( { label: 'Orchard', description: 'an aple & pear ' } );
 		expect( groups[ 2 ].items[ 0 ] ).toMatchObject( { label: 'Did you mean "apple"?', query: 'apple', url: null } );
+	} );
+
+	it( 'does not repeat a full-text result that differs only in case', async () => {
+		mockFetch( {
+			'meta=siteinfo': siteinfo,
+			'action=opensearch': [ 'apple', [ 'Apple pie' ], [ '' ], [] ],
+			'list=search': { query: { search: [ { title: 'APPLE PIE', snippet: 'dup' } ] } }
+		} );
+		const groups = await getGroups( { query: 'apple', mode: null, context, registry: registry() }, signal() );
+		expect( groups.map( ( g ) => g.label ) ).not.toContain( 'In page text' );
+		expect( groups[ 0 ].items.map( ( i ) => i.label ) ).toEqual( [ 'Apple pie' ] );
 	} );
 
 	it( 'skips full text for short input', async () => {

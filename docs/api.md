@@ -80,6 +80,7 @@ Commands appear when the typed text matches their label.
 		description: 'A fruit',      // optional, one line
 		badge: 'Food',               // optional, small tag after the label
 		icon: tacp.icons.article,    // optional, ignored when thumbnail is set
+		iconUrl: '//upload.wikimedia.org/…', // optional image in the icon slot, instead of icon
 		thumbnail: { url: '…', width: 60 }, // optional; width (px) lets TACP fetch a sharper
 		                             // one for `title` on high-density screens
 		title: 'Apple',              // optional wiki page title: enables Shift+Enter (edit) and Recent

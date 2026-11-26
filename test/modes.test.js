@@ -52,6 +52,41 @@ describe( '/ns', () => {
 		const [ pages ] = await sub.getResults( '', context, signal() );
 		expect( labels( pages ) ).toEqual( [ 'Bob' ] );
 	} );
+
+	it( 'loads the image of each file found in the File namespace', async () => {
+		const fetch = mockFetch( {
+			'list=prefixsearch': { query: { prefixsearch: [
+				{ title: 'File:Apple.jpg' }, { title: 'File:Pear.svg' }
+			] } },
+			'prop=imageinfo': { query: { pages: [
+				{ title: 'File:Apple.jpg', imageinfo: [ {
+					thumburl: '//img/apple.jpg', url: '//img/apple-full.jpg'
+				} ] },
+				{ title: 'File:Pear.svg', imageinfo: [ { url: '//img/pear.svg' } ] }
+			] } }
+		} );
+		const sub = nsMode.getResults( 'file' )[ 0 ].items[ 0 ].mode;
+		const [ pages ] = await sub.getResults( 'apple', context, signal() );
+		expect( labels( pages ) ).toEqual( [ 'Apple.jpg', 'Pear.svg' ] );
+		const info = decodeURIComponent( fetch.mock.calls[ 1 ][ 0 ] );
+		expect( info ).toContain( 'prop=imageinfo' );
+		expect( info ).toContain( 'iiurlwidth=40' );
+		expect( info ).toContain( 'titles=File:Apple.jpg|File:Pear.svg' );
+		expect( pages.items[ 0 ].iconUrl ).toBe( 'http://img/apple.jpg' );
+		expect( pages.items[ 1 ].iconUrl ).toBe( 'http://img/pear.svg' );
+	} );
+
+	it( 'keeps file results when their image info cannot be fetched', async () => {
+		mockFetch( {
+			'list=prefixsearch': { query: { prefixsearch: [ { title: 'File:Apple.jpg' } ] } },
+			'prop=imageinfo': new Error( 'bad' )
+		} );
+		const sub = nsMode.getResults( 'file' )[ 0 ].items[ 0 ].mode;
+		const [ pages ] = await sub.getResults( 'apple', context, signal() );
+		expect( labels( pages ) ).toEqual( [ 'Apple.jpg' ] );
+		expect( pages.items[ 0 ].iconUrl ).toBeUndefined();
+		expect( mw.log.warn ).toHaveBeenCalled();
+	} );
 } );
 
 describe( '/action', () => {

@@ -126,6 +126,7 @@ export function normalizeGroups( groups, prefix ) {
 			redirectFrom: str( it.redirectFrom ),
 			title: str( it.title ),
 			icon: resolveIcon( it.icon ),
+			iconUrl: safeUrl( it.iconUrl ),
 			thumbnail: it.thumbnail && safeUrl( it.thumbnail.url ) ? {
 				url: safeUrl( it.thumbnail.url ),
 				width: Number( it.thumbnail.width ) || 0
@@ -155,10 +156,12 @@ export function normalizeGroups( groups, prefix ) {
  */
 export function exactFirst( items, query ) {
 	const t = mw.Title.newFromText( query.trim() );
-	const target = t && t.getPrefixedText();
+	// mw.Title only capitalises the first letter, so "Passive Block" and
+	// "passive block" are different strings even when they name the same page
+	const target = t ? t.getPrefixedText().toLowerCase() : '';
 	const same = ( title ) => {
 		const other = title && mw.Title.newFromText( title );
-		return !!other && other.getPrefixedText() === target;
+		return !!other && other.getPrefixedText().toLowerCase() === target;
 	};
 	const i = target ? items.findIndex( ( it ) => same( it.title ) || same( it.redirectFrom ) ) : -1;
 	return i > 0 ? [ items[ i ] ].concat( items.slice( 0, i ), items.slice( i + 1 ) ) : items;
@@ -245,10 +248,10 @@ export function getGroups( { query, mode, context, registry }, signal ) {
 		const q = query.trim();
 		pending = Promise.all( [ soft( searchTitles( q, signal ) ), userCanEdit(), fullText( q, signal ) ] )
 			.then( ( [ results, canEdit, full ] ) => {
-				const seen = new Set( results.map( ( it ) => it.title ) );
+				const seen = new Set( results.map( ( it ) => it.title.toLowerCase() ) );
 				return [
 					group( 'results', exactFirst( results, q ) ),
-					group( 'fulltext', full.items.filter( ( it ) => !seen.has( it.title ) ) ),
+					group( 'fulltext', full.items.filter( ( it ) => !seen.has( it.title.toLowerCase() ) ) ),
 					group( 'commands', commands
 						.filter( ( c ) => matches( text( c.label ), query ) )
 						.map( ( c ) => commandItem( c, context ) ) ),
