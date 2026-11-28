@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parseTrigger } from '../src/core/input.js';
-import { highlight, highlightWords, descriptionMatches, matches, text, queryWords } from '../src/core/text.js';
+import { highlight, highlightWords, descriptionMatches, excerptAround, matches, text, queryWords } from '../src/core/text.js';
 import { shortcutFor, isEditable, takeoverTarget } from '../src/loader/shortcuts.js';
 import { normalizeConfig } from '../src/shared/config.js';
 import { loadMessages } from '../src/shared/messages.js';
@@ -81,6 +81,16 @@ describe( 'text helpers', () => {
 			{ text: ' one', match: false }
 		] );
 		expect( highlightWords( 'Nothing here', '' ) ).toEqual( [ { text: 'Nothing here', match: false } ] );
+	} );
+
+	it( 'centres a short excerpt on the first matched word', () => {
+		const page = 'A'.repeat( 300 ) + ' A flimsy spoon ' + 'B'.repeat( 300 );
+		const excerpt = excerptAround( page, 'flimsy y', 60 );
+		expect( excerpt ).toContain( 'flimsy' );
+		expect( excerpt.length ).toBeLessThanOrEqual( 62 );
+		expect( excerpt.startsWith( '…' ) ).toBe( true );
+		expect( excerpt.endsWith( '…' ) ).toBe( true );
+		expect( excerptAround( 'A short page', 'short' ) ).toBe( 'A short page' );
 	} );
 
 	it( 'matches case-insensitively', () => {

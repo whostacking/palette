@@ -1,6 +1,6 @@
 import { apiGet, restGet, isAbort } from '../services/api.js';
 import { pageItem } from '../items.js';
-import { descriptionMatches } from '../text.js';
+import { descriptionMatches, excerptAround } from '../text.js';
 
 const LIMIT = 10;
 let restBroken = false;
@@ -74,10 +74,11 @@ function plainText( html ) {
 }
 
 /**
- * First-section extracts have $wgExtractsRemoveClasses applied on the server,
- * so entries such as stub notices never reach the description. One batched
- * request for all hits; without extracts (extension missing or API error) the
- * caller falls back to the snippet. Aborts propagate.
+ * Whole-page plain text extracts have $wgExtractsRemoveClasses applied on the
+ * server, so entries such as stub notices never reach the description. No
+ * exintro/exchars limit: the whole page is searched, not just its lead. One
+ * batched request for all hits; without extracts (extension missing or API
+ * error) the caller falls back to the snippet. Aborts propagate.
  *
  * @param {Object[]} pages Search hits
  * @param {AbortSignal} signal
@@ -92,8 +93,6 @@ function extractsFor( pages, signal ) {
 		action: 'query',
 		prop: 'extracts',
 		explaintext: 1,
-		exintro: 1,
-		exchars: 200,
 		exlimit: 'max',
 		titles: titles.join( '|' )
 	}, signal ).then( ( data ) => {
@@ -114,8 +113,8 @@ function extractsFor( pages, signal ) {
 }
 
 /**
- * Full-text search through CirrusSearch: matching pages with a clean extract
- * (or snippet), and its "did you mean" suggestion.
+ * Full-text search through CirrusSearch: matching pages with their whole-page
+ * plain text (or a snippet), and its "did you mean" suggestion.
  *
  * @param {string} query
  * @param {AbortSignal} signal
@@ -134,12 +133,15 @@ export function searchText( query, signal ) {
 		return extractsFor( hits, signal ).then( ( extracts ) => ( {
 			items: hits
 				.map( ( page ) => {
-					const description = extracts.get( page.title.toLowerCase() ) ||
+					const full = extracts.get( page.title.toLowerCase() ) ||
 						plainText( page.snippet || '' );
-					// Keep only pages whose extract actually contains a word from
-					// the query; CirrusSearch may match text outside the snippet.
-					return descriptionMatches( description, query ) ?
-						pageItem( page.title, { description } ) : null;
+					// Filter against the whole page, but show a short slice
+					// around the match so it is visible in the one-line label.
+					if ( !descriptionMatches( full, query ) ) {
+						return null;
+					}
+					const description = excerptAround( full, query );
+					return pageItem( page.title, { description } );
 				} )
 				.filter( Boolean ),
 			suggestion: ( data.query.searchinfo && data.query.searchinfo.suggestion ) || ''

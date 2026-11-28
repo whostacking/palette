@@ -81,6 +81,40 @@ export function descriptionMatches( description, query ) {
 }
 
 /**
+ * A short, readable slice of a long text, centred on the first query word.
+ * The caller can filter against the full text and show this excerpt instead,
+ * so a match deep in an article is not hidden past a one-line ellipsis.
+ *
+ * @param {string} str Full text
+ * @param {string} query
+ * @param {number} [length] Maximum characters of the excerpt
+ * @return {string}
+ */
+export function excerptAround( str, query, length = 240 ) {
+	const full = String( str || '' );
+	if ( full.length <= length ) {
+		return full;
+	}
+	const lower = full.toLowerCase();
+	let at = -1;
+	queryWords( query ).forEach( ( word ) => {
+		const found = new RegExp( '\\b' + escapeRegExp( word ) + '\\b', 'i' ).exec( lower );
+		if ( found && ( at === -1 || found.index < at ) ) {
+			at = found.index;
+		}
+	} );
+	if ( at === -1 ) {
+		return full.slice( 0, length ).replace( /\s+$/, '' ) + '…';
+	}
+	// Leave about a third of the excerpt before the match, then fill the rest
+	const start = Math.max( 0, at - Math.floor( length / 3 ) );
+	const end = Math.min( full.length, start + length );
+	return ( start > 0 ? '…' : '' ) +
+		full.slice( start, end ).trim() +
+		( end < full.length ? '…' : '' );
+}
+
+/**
  * Split text around every whole-word occurrence of a query word, so the
  * template can bold matches without ever rendering HTML.
  *

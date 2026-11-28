@@ -8,7 +8,7 @@ Removed, Fixed. Every pull request that changes `src/` adds a line here.
 ### Changed
 - The "Commands" group is no longer shown on an empty input; commands still appear while typing and under `/`.
 - Result items hide their secondary actions on narrow screens.
-- "In page text" descriptions use a TextExtracts intro, where `$wgExtractsRemoveClasses` removes stub notices and other boilerplate on the server, and strip elements from those classes in any snippet markup. Wikis that customise the setting must also expose it with `mw.config.set( 'wgExtractsRemoveClasses', … )`, since TextExtracts does not send it to JavaScript.
+- "In page text" descriptions filter against the whole-page TextExtracts plain text, where `$wgExtractsRemoveClasses` removes stub notices and other boilerplate on the server, and show a short excerpt centred on the matched word. Elements from those classes are also stripped from any snippet markup. Wikis that customise the setting must also expose it with `mw.config.set( 'wgExtractsRemoveClasses', … )`, since TextExtracts does not send it to JavaScript.
 
 ### Fixed
 - File results now show the file's own image as a standard `cdx-thumbnail`, whatever search provider found them. Audio files use the volume icon instead.

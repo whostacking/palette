@@ -90,7 +90,24 @@ describe( 'search provider', () => {
 		const url = decodeURIComponent( fetch.mock.calls.find(
 			( c ) => c[ 0 ].includes( 'prop=extracts' ) )[ 0 ] );
 		expect( url ).toContain( 'explaintext=1' );
+		// The whole page is used, not a limited intro
+		expect( url ).not.toContain( 'exintro=' );
+		expect( url ).not.toContain( 'exchars=' );
 		expect( url ).toContain( 'titles=Flimsy+spoon' );
+	} );
+
+	it( 'shows an excerpt around a match found deep in the page', async () => {
+		mockFetch( {
+			'list=search': { query: { search: [ { title: 'Flimsy spoon', snippet: 'not relevant' } ] } },
+			'prop=extracts': { query: { pages: [ {
+				title: 'Flimsy spoon',
+				extract: 'A'.repeat( 400 ) + ' A flimsy spoon is useful. ' + 'B'.repeat( 400 )
+			} ] } }
+		} );
+		const { items } = await searchText( 'flimsy', new AbortController().signal );
+		expect( items ).toHaveLength( 1 );
+		expect( items[ 0 ].description ).toContain( 'flimsy' );
+		expect( items[ 0 ].description.length ).toBeLessThanOrEqual( 242 );
 	} );
 
 	it( 'falls back to the snippet when extracts are unavailable', async () => {
