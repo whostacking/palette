@@ -1,5 +1,6 @@
 import { apiGet, restGet, isAbort } from '../services/api.js';
 import { pageItem } from '../items.js';
+import { descriptionMatches } from '../text.js';
 
 const LIMIT = 10;
 let restBroken = false;
@@ -63,7 +64,13 @@ export function searchText( query, signal ) {
 		srinfo: 'suggestion'
 	}, signal ).then( ( data ) => ( {
 		items: data.query.search
-			.map( ( page ) => pageItem( page.title, { description: plainText( page.snippet || '' ) } ) )
+			.map( ( page ) => {
+				const description = plainText( page.snippet || '' );
+				// Keep only pages whose extract actually contains a word from
+				// the query; CirrusSearch may match text outside the snippet.
+				return descriptionMatches( description, query ) ?
+					pageItem( page.title, { description } ) : null;
+			} )
 			.filter( Boolean ),
 		suggestion: ( data.query.searchinfo && data.query.searchinfo.suggestion ) || ''
 	} ) );

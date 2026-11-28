@@ -42,12 +42,27 @@
 					</template></template></span>
 				<span v-if="item.badge" class="tacp-item__badge">{{ item.badge }}</span>
 			</span>
-			<span v-if="item.redirectFrom" class="tacp-item__redirect">{{ redirectText }}</span>
-			<span v-if="item.description" class="tacp-item__description">
-				{{ item.description }}
-			</span>
+			<span v-if="item.description" class="tacp-item__description"><template
+				v-for="( part, i ) in descriptionParts"
+				:key="i"><b v-if="part.match">
+					{{ part.text }}
+				</b><template v-else>
+					{{ part.text }}
+				</template></template></span>
 		</span>
-		<span v-if="item.actions.length" class="tacp-item__actions">
+		<span v-if="item.actions.length || item.redirectFrom" class="tacp-item__actions">
+			<span
+				v-if="item.redirectFrom"
+				class="tacp-item__metadata"
+				:title="redirectText"
+			>
+				<cdx-icon
+					class="tacp-item__metadata__icon"
+					:icon="icons.link"
+					size="small"
+				></cdx-icon>
+				<span class="tacp-item__metadata__label">{{ item.redirectFrom }}</span>
+			</span>
 			<!-- Not focusable: reached with → from the input; inside an option it
 				would not be exposed anyway, so the palette announces it -->
 			<span
@@ -69,7 +84,7 @@
 import { defineComponent, computed, ref, watch, onMounted, onBeforeUnmount } from 'vue';
 import { CdxIcon, CdxThumbnail } from '@wikimedia/codex';
 import icons from '../icons.js';
-import { highlight, msg } from '../text.js';
+import { highlight, highlightWords, msg } from '../text.js';
 import { thumbWidth, safeUrl } from '../items.js';
 import { sharpThumb } from '../services/thumbs.js';
 
@@ -115,6 +130,9 @@ export default defineComponent( {
 		// The thumbnail as given, then, on screens that need more pixels than
 		// it has (e.g. 60px at 2x), one at 40px × devicePixelRatio
 		function load() {
+			if ( !props.item.thumbnail ) {
+				return;
+			}
 			const gen = generation;
 			const { url, width } = props.item.thumbnail;
 			preload( url, false, gen );
@@ -144,14 +162,28 @@ export default defineComponent( {
 				load();
 				return;
 			}
-			observer = new IntersectionObserver( ( entries ) => {
+			// A row can be swapped for a different kind of item (a link becomes
+			// a div, or it moves to another column). Bind to this generation so
+			// a callback queued for the previous item cannot disconnect the new
+			// observer, and so it cannot load an image into the wrong row.
+			const gen = generation;
+			const io = new IntersectionObserver( ( entries ) => {
+				if ( gen !== generation ) {
+					io.disconnect();
+					return;
+				}
 				if ( entries.some( ( e ) => e.isIntersecting ) ) {
-					observer.disconnect();
+					io.disconnect();
 					observer = null;
 					load();
 				}
 			}, { rootMargin: '100px' } );
-			observer.observe( root.value );
+			observer = io;
+			if ( root.value ) {
+				io.observe( root.value );
+			} else {
+				load();
+			}
 		}
 
 		onMounted( start );
@@ -166,12 +198,13 @@ export default defineComponent( {
 			failedIconUrl.value = null;
 			sharp = false;
 			start();
-		} );
+		}, { flush: 'post' } );
 
 		return {
 			root,
 			thumbUrl,
 			failedIconUrl,
+			icons,
 			defaultIcon: icons.article,
 			// Only items that open their url (App.vue activate()); modes,
 			// queries and commands do not
@@ -181,6 +214,7 @@ export default defineComponent( {
 					null : safeUrl( it.url );
 			} ),
 			parts: computed( () => highlight( props.item.label, props.query ) ),
+			descriptionParts: computed( () => highlightWords( props.item.description || '', props.query ) ),
 			redirectText: computed( () => msg( 'tacp-redirected-from', props.item.redirectFrom ) )
 		};
 	}

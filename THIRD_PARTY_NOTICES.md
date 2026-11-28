@@ -35,3 +35,4 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 - Vue and the Codex components (`@wikimedia/codex`, GPL-2.0+) are served by MediaWiki core through ResourceLoader and loaded with `require()`. They are not part of TACP's files.
 - Codex design tokens (`@wikimedia/codex-design-tokens`, GPL-2.0+) are not a dependency. `src/styles/tokens.less` only names the tokens as CSS custom properties, with hand-written fallback values.
+- The redirect metadata chip in result rows follows the layout idea used by the Citizen skin's command palette (`StarCitizenTools/mediawiki-skins-Citizen`, GPL-3.0-or-later). No CSS, markup or SVG was copied: TACP's version uses its own design tokens and the MIT-licensed Codex link icon, so it stays under TACP's MIT licence.

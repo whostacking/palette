@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parseTrigger } from '../src/core/input.js';
-import { highlight, matches, text } from '../src/core/text.js';
+import { highlight, highlightWords, descriptionMatches, matches, text, queryWords } from '../src/core/text.js';
 import { shortcutFor, isEditable, takeoverTarget } from '../src/loader/shortcuts.js';
 import { normalizeConfig } from '../src/shared/config.js';
 import { loadMessages } from '../src/shared/messages.js';
@@ -61,6 +61,24 @@ describe( 'text helpers', () => {
 		] );
 		expect( highlight( 'Main Page', '' ) ).toEqual( [ { text: 'Main Page', match: false } ] );
 		expect( highlight( 'Main Page', 'zzz' ) ).toEqual( [ { text: 'Main Page', match: false } ] );
+	} );
+
+	it( 'only accepts extracts that contain a real query word', () => {
+		expect( queryWords( 'flimsy y' ) ).toEqual( [ 'flimsy' ] );
+		expect( descriptionMatches( 'A serving of miso soup', 'flimsy y' ) ).toBe( false );
+		expect( descriptionMatches( 'A flimsy wooden spoon', 'flimsy y' ) ).toBe( true );
+		expect( descriptionMatches( 'FLIMSY by design', 'flimsy y' ) ).toBe( true );
+	} );
+
+	it( 'bolds every whole-word match in a description', () => {
+		expect( highlightWords( 'A flimsy spoon, not a flimsy one', 'flimsy y' ) ).toEqual( [
+			{ text: 'A ', match: false },
+			{ text: 'flimsy', match: true },
+			{ text: ' spoon, not a ', match: false },
+			{ text: 'flimsy', match: true },
+			{ text: ' one', match: false }
+		] );
+		expect( highlightWords( 'Nothing here', '' ) ).toEqual( [ { text: 'Nothing here', match: false } ] );
 	} );
 
 	it( 'matches case-insensitively', () => {

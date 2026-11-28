@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import ResultItem from '../src/core/components/ResultItem.vue';
+import icons from '../src/core/icons.js';
 
 function item( extra ) {
 	return Object.assign( { id: 'x-0', label: 'Apple.jpg', actions: [] }, extra );
@@ -60,6 +61,67 @@ describe( 'ResultItem', () => {
 		loads[ 1 ].onload();
 		await nextTick();
 		expect( wrapper.vm.thumbUrl ).toBe( '/img/two.jpg' );
+	} );
+
+	it( 'observes the new row element after a fast result change', async () => {
+		const observed = [];
+		vi.stubGlobal( 'IntersectionObserver', class {
+			constructor( callback ) {
+				this.callback = callback;
+			}
+
+			observe( el ) {
+				observed.push( el );
+			}
+
+			disconnect() {}
+		} );
+		const wrapper = render( {
+			label: 'Apple.jpg',
+			title: 'Apple',
+			url: '/wiki/Apple',
+			thumbnail: { url: '/img/apple.jpg', width: 40 }
+		} );
+		const before = wrapper.find( '.tacp-item' ).element;
+		await wrapper.setProps( { item: item( {
+			label: 'Banana.jpg',
+			thumbnail: { url: '/img/banana.jpg', width: 40 }
+		} ) } );
+		const after = wrapper.find( '.tacp-item' ).element;
+		// A link became a div, so Vue replaced the root node. The lazy image
+		// observer must be attached to the new one, not the detached one.
+		expect( after.tagName ).not.toBe( before.tagName );
+		expect( observed[ observed.length - 1 ] ).toBe( after );
+	} );
+
+	it( 'bolds query words in the description', () => {
+		const wrapper = mount( ResultItem, { props: {
+			id: 'x-0',
+			item: item( { description: 'A flimsy spoon' } ),
+			query: 'flimsy y'
+		} } );
+		const bold = wrapper.find( '.tacp-item__description b' );
+		expect( bold.exists() ).toBe( true );
+		expect( bold.text() ).toBe( 'flimsy' );
+	} );
+
+	it( 'shows the redirect source beside, not above, the secondary actions', () => {
+		const wrapper = mount( ResultItem, { props: {
+			id: 'x-0',
+			item: item( {
+				redirectFrom: 'C$',
+				actions: [
+					{ id: 'edit', label: 'Edit', icon: icons.edit, url: '/wiki/X?action=edit' },
+					{ id: 'history', label: 'History', icon: icons.history, url: '/wiki/X?action=history' }
+				]
+			} )
+		} } );
+		expect( wrapper.find( '.tacp-item__redirect' ).exists() ).toBe( false );
+		const metadata = wrapper.find( '.tacp-item__metadata' );
+		expect( metadata.text() ).toBe( 'C$' );
+		const actions = wrapper.findAll( '.tacp-item__action' );
+		expect( actions ).toHaveLength( 2 );
+		expect( metadata.element.nextElementSibling ).toBe( actions[ 0 ].element );
 	} );
 
 	it( 'shows the file image in the icon slot when iconUrl is set', () => {

@@ -217,6 +217,29 @@ export default defineComponent( {
 			}
 		} );
 
+		// iOS Safari does not shrink the layout viewport when the keyboard
+		// opens: a full-height sheet ends up behind it, with no reachable
+		// scroll area. Track the visual viewport instead.
+		function syncViewport() {
+			const vv = window.visualViewport;
+			if ( vv ) {
+				document.documentElement.style.setProperty(
+					'--tacp-viewport-height', Math.round( vv.height ) + 'px' );
+			}
+		}
+		onMounted( () => {
+			if ( window.visualViewport ) {
+				window.visualViewport.addEventListener( 'resize', syncViewport );
+				syncViewport();
+			}
+		} );
+		onBeforeUnmount( () => {
+			if ( window.visualViewport ) {
+				window.visualViewport.removeEventListener( 'resize', syncViewport );
+			}
+			document.documentElement.style.removeProperty( '--tacp-viewport-height' );
+		} );
+
 		const currentMode = computed( () => modeStack.value[ modeStack.value.length - 1 ] || null );
 		const modeLabel = computed( () => currentMode.value ? text( currentMode.value.label ) : '' );
 		const view = computed( () => {

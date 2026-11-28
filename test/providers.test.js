@@ -1,7 +1,7 @@
 /* eslint-disable camelcase -- REST API field names */
 import { describe, it, expect } from 'vitest';
 import { mockFetch, siteinfo } from './setup.js';
-import { searchTitles } from '../src/core/providers/search.js';
+import { searchTitles, searchText } from '../src/core/providers/search.js';
 import { getRelated } from '../src/core/providers/related.js';
 import { getGroups, normalizeGroups, exactFirst } from '../src/core/results.js';
 import { createRegistry, defineMode } from '../src/core/services/registry.js';
@@ -37,6 +37,16 @@ describe( 'search provider', () => {
 		expect( items[ 0 ] ).toMatchObject( { label: 'Apple', description: 'A fruit', thumbnail: { url: '//img/apple.jpg' }, badge: '' } );
 		expect( items[ 1 ] ).toMatchObject( { label: 'Apple', badge: 'User', redirectFrom: 'Apples', title: 'User:Apple' } );
 		expect( items[ 0 ].actions.map( ( a ) => a.id ) ).toEqual( [ 'edit', 'history' ] );
+	} );
+
+	it( 'drops full text hits whose extract does not contain the query word', async () => {
+		mockFetch( { 'list=search': { query: { search: [
+			{ title: 'Miso', snippet: 'A savoury paste used in soup' },
+			{ title: 'Flimsy spoon', snippet: 'A <span class="searchmatch">flimsy</span> wooden spoon' }
+		] } } } );
+		const { items } = await searchText( 'flimsy y', new AbortController().signal );
+		expect( items.map( ( i ) => i.label ) ).toEqual( [ 'Flimsy spoon' ] );
+		expect( items[ 0 ].description ).toBe( 'A flimsy wooden spoon' );
 	} );
 
 	it( 'falls back to opensearch when rest.php fails', async () => {
@@ -248,6 +258,12 @@ describe( 'search box behaviour', () => {
 } );
 
 describe( 'page items', () => {
+	it( 'excludes change history subpages', () => {
+		expect( pageItem( 'Fisch/Change History' ) ).toBe( null );
+		expect( pageItem( 'Fisch/change_history' ) ).toBe( null );
+		expect( pageItem( 'Fisch/History' ) ).not.toBe( null );
+	} );
+
 	it( 'gives file results from any provider a standard thumbnail', () => {
 		const item = pageItem( 'File:Apple.jpg' );
 		expect( item.icon ).toBe( icons.image );

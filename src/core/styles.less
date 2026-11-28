@@ -203,8 +203,7 @@
 	}
 
 	&__label,
-	&__description,
-	&__redirect {
+	&__description {
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
@@ -224,20 +223,47 @@
 		font-size: @font-size-x-small;
 	}
 
-	&__description,
-	&__redirect {
+	&__description {
 		color: @color-subtle;
 		font-size: @font-size-small;
 	}
 
-	&__redirect {
-		font-style: italic;
+	// Redirect source shown beside the secondary actions, like a metadata
+	// chip. Written for TACP's tokens; not copied from Citizen (GPL-3.0).
+	&__metadata {
+		display: flex;
+		flex-shrink: 0;
+		align-items: center;
+		padding: @spacing-12 @spacing-25;
+		border: @border-width-base solid @border-color-subtle;
+		border-radius: @border-radius-base;
+		background-color: @background-color-interactive;
+		color: @color-subtle;
+		font-size: @font-size-x-small;
+		line-height: @line-height-small;
+		white-space: nowrap;
+
+		&__icon {
+			flex-shrink: 0;
+			margin-right: @spacing-25;
+		}
+
+		&__label {
+			max-width: 12em;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			font-weight: @font-weight-bold;
+		}
 	}
 
 	&__actions {
 		display: flex;
 		flex-shrink: 0;
 		visibility: hidden;
+
+		> * + * {
+			margin-left: @spacing-25;
+		}
 	}
 
 	&--active &__actions,
@@ -260,10 +286,6 @@
 		&--active {
 			outline: 2px solid @border-color-progressive;
 		}
-	}
-
-	&__action + &__action {
-		margin-left: @spacing-25;
 	}
 }
 
@@ -336,7 +358,7 @@
 /* stylelint-disable declaration-no-important */
 @media screen and ( min-width: 1119px ) {
 	.tacp-palette.cdx-dialog {
-		max-width: 55vw !important;
+		max-width: 60vw !important;
 	}
 
 	// Progressive enhancement: older Safari keeps its own scroll lock
@@ -375,10 +397,22 @@
 		width: 100%;
 		max-width: none;
 		height: 100%;
+		// iOS keeps the layout viewport tall when the keyboard opens. App.vue
+		// sets this from visualViewport so the sheet fits above the keyboard
+		// and its result list remains scrollable. Older browsers use 100dvh,
+		// then the 100% above.
+		/* stylelint-disable-next-line plugin/no-unsupported-browser-features */
+		height: var( --tacp-viewport-height, 100dvh );
 		max-height: none;
 		margin-top: 0;
 		border: 0;
 		border-radius: 0;
+	}
+
+	.cdx-dialog__body {
+		min-height: 0;
+		overflow-y: auto;
+		-webkit-overflow-scrolling: touch;
 	}
 
 	.tacp-header {
@@ -393,8 +427,9 @@
 		display: none;
 	}
 
-	// No room for secondary actions on a narrow screen
-	.tacp-item__actions {
+	// No room for secondary actions on a narrow screen, but the redirect
+	// metadata stays visible (see ResultItem.vue)
+	.tacp-item__action {
 		display: none;
 	}
 }

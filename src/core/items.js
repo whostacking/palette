@@ -62,6 +62,10 @@ export function pageItem( title, extra ) {
 	}
 	const ns = t.getNamespaceId();
 	const prefixed = t.getPrefixedText();
+	// Change-history subpages are navigation artefacts, not useful results
+	if ( /\/change[ _]history$/i.test( prefixed ) ) {
+		return null;
+	}
 	const isFile = ns === mw.config.get( 'wgNamespaceIds' ).file;
 	// Audio files have no useful still image; show a speaker instead
 	const isAudio = isFile && /\.(?:mp3|ogg|oga|wav|flac|m4a|aac|opus)$/i.test( t.getMainText() );
