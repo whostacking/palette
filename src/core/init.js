@@ -14,7 +14,8 @@ import historyMode from './modes/history.js';
 import createHelpMode from './modes/help.js';
 import aboutMode from './modes/about.js';
 import sectionMode from './modes/section.js';
-import langMode from './modes/lang.js';
+// Disabled: @ now opens user search (see src/core/input.js)
+// import langMode from './modes/lang.js';
 import './styles.less';
 
 /**
@@ -44,7 +45,7 @@ loadMessages( __MESSAGES__, loader.config.messages, mw.language.getFallbackLangu
 
 const registry = createRegistry( loader.config.disabledModes );
 [
-	nsMode, actionMode, sectionMode, langMode, userMode,
+	nsMode, actionMode, sectionMode, /* langMode, */ userMode,
 	categoryMode, historyMode, createHelpMode( registry ), aboutMode
 ].forEach( ( spec ) => registry.register( defineMode( spec ), true ) );
 builtinCommands.forEach( ( cmd ) => registry.register( cmd, true ) );

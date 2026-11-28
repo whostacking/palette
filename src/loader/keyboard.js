@@ -24,7 +24,10 @@ export function primeKeyboard() {
 	el.className = 'tacp-keyboard-seed';
 	el.tabIndex = -1;
 	el.autocomplete = 'off';
-	el.setAttribute( 'aria-hidden', 'true' );
+	// This input is focused, so it must not be aria-hidden (Chrome blocks
+	// aria-hidden on a focused element). It is visually hidden only. Give it
+	// a name instead of leaving an unlabelled input exposed.
+	el.setAttribute( 'aria-label', 'Search' );
 	( document.body || document.documentElement ).appendChild( el );
 	seed = el;
 	el.focus();

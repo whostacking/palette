@@ -6,7 +6,7 @@ import { getRelated } from '../src/core/providers/related.js';
 import { getGroups, normalizeGroups, exactFirst } from '../src/core/results.js';
 import { createRegistry, defineMode } from '../src/core/services/registry.js';
 import { builtinCommands } from '../src/core/providers/commands.js';
-import { addRecent, getRecent, clearRecent } from '../src/core/services/recent.js';
+import { addRecent, getRecent, clearRecent, removeRecent } from '../src/core/services/recent.js';
 import icons from '../src/core/icons.js';
 import { pageItem, thumbWidth } from '../src/core/items.js';
 import { sharpThumb } from '../src/core/services/thumbs.js';
@@ -35,7 +35,10 @@ describe( 'search provider', () => {
 		mockFetch( { '/rest.php/v1/search/title': restPages } );
 		const items = await searchTitles( 'app', new AbortController().signal );
 		expect( items[ 0 ] ).toMatchObject( { label: 'Apple', description: 'A fruit', thumbnail: { url: '//img/apple.jpg' }, badge: '' } );
-		expect( items[ 1 ] ).toMatchObject( { label: 'Apple', badge: 'User', redirectFrom: 'Apples', title: 'User:Apple' } );
+		expect( items[ 1 ] ).toMatchObject( {
+			label: 'Apple', badge: '', namespace: 'User:',
+			redirectFrom: 'Apples', title: 'User:Apple'
+		} );
 		expect( items[ 0 ].actions.map( ( a ) => a.id ) ).toEqual( [ 'edit', 'history' ] );
 	} );
 
@@ -182,11 +185,26 @@ describe( 'getGroups', () => {
 		expect( groups[ 1 ].items.map( ( i ) => i.label ) ).toEqual( [ 'Rel' ] );
 	} );
 
+	it( 'gives each recent item a trash action that forgets only that page', async () => {
+		clearRecent();
+		addRecent( 'Seen one' );
+		addRecent( 'Seen two' );
+		mockFetch( { 'meta=siteinfo': siteinfo, morelike: { query: { pages: [] } } } );
+		const groups = await getGroups( { query: '', mode: null, context, registry: registry() }, signal() );
+		const recent = groups[ 0 ].items;
+		expect( recent ).toHaveLength( 2 );
+		const remove = recent[ 0 ].actions.find( ( a ) => a.id === 'remove-recent' );
+		expect( remove ).toBeDefined();
+		remove.run();
+		expect( getRecent().map( ( e ) => e.title ) ).toEqual( [ 'Seen one' ] );
+		removeRecent( 'Seen one' );
+	} );
+
 	it( 'shows results, matching commands and query actions while typing', async () => {
 		// REST was marked broken by the fallback test above, so opensearch answers
 		mockFetch( { 'action=opensearch': [ 'random', [ 'Random walk' ], [ '' ], [] ] } );
 		const groups = await getGroups( { query: 'random', mode: null, context, registry: registry() }, signal() );
-		expect( groups.map( ( g ) => g.label ) ).toEqual( [ 'Results', 'Commands', 'More' ] );
+		expect( groups.map( ( g ) => g.label ) ).toEqual( [ '', 'Commands', 'More' ] );
 		expect( groups[ 1 ].items.map( ( i ) => i.label ) ).toEqual( [ 'Random page' ] );
 		expect( groups[ 2 ].items.map( ( i ) => i.label ) ).toEqual( [
 			'Go to "Random"', 'Search full text for "random"', 'Create or edit "Random"'
@@ -305,7 +323,7 @@ describe( 'search box behaviour', () => {
 			} }
 		} );
 		const groups = await getGroups( { query: 'aple', mode: null, context, registry: registry() }, signal() );
-		expect( groups.map( ( g ) => g.label ) ).toEqual( [ 'Results', 'In page text', 'More' ] );
+		expect( groups.map( ( g ) => g.label ) ).toEqual( [ '', 'In page text', 'More' ] );
 		expect( groups[ 1 ].items ).toHaveLength( 1 );
 		expect( groups[ 1 ].items[ 0 ] ).toMatchObject( { label: 'Orchard', description: 'an aple & pear ' } );
 		expect( groups[ 2 ].items[ 0 ] ).toMatchObject( { label: 'Did you mean "apple"?', query: 'apple', url: null } );
@@ -330,6 +348,12 @@ describe( 'search box behaviour', () => {
 } );
 
 describe( 'page items', () => {
+	it( 'uses the category and user icons for direct namespace results', () => {
+		expect( pageItem( 'Category:Fish' ).icon ).toBe( icons.tag );
+		expect( pageItem( 'User:Alice' ).icon ).toBe( icons.user );
+		expect( pageItem( 'User:Alice/Sandbox' ).icon ).toBe( icons.article );
+	} );
+
 	it( 'excludes change history subpages', () => {
 		expect( pageItem( 'Fisch/Change History' ) ).toBe( null );
 		expect( pageItem( 'Fisch/change_history' ) ).toBe( null );

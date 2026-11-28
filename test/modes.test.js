@@ -10,7 +10,6 @@ import sectionMode from '../src/core/modes/section.js';
 import langMode from '../src/core/modes/lang.js';
 import aboutMode from '../src/core/modes/about.js';
 import { createRegistry, defineMode } from '../src/core/services/registry.js';
-import { addRecent, getRecent } from '../src/core/services/recent.js';
 import tacpIcons from '../src/core/icons.js';
 
 const context = { title: 'Main_Page', namespace: 0, articleId: 1 };
@@ -189,18 +188,14 @@ describe( '/history', () => {
 } );
 
 describe( '/help', () => {
-	it( 'lists every mode and offers to clear recent items', () => {
+	it( 'lists every mode without a clear-recent command', () => {
 		const registry = createRegistry( [] );
 		const help = defineMode( createHelpMode( registry ) );
 		registry.register( help, true );
 		registry.register( defineMode( Object.assign( {}, userMode ) ), true );
-		const [ modes, tools ] = help.getResults( '', context );
-		expect( modes.items.map( ( i ) => i.badge ) ).toEqual( [ '/help', '/user' ] );
-
-		addRecent( 'X' );
-		tools.items[ 0 ].run();
-		expect( getRecent() ).toEqual( [] );
-		expect( mw.notify ).toHaveBeenCalled();
+		const groups = help.getResults( '', context );
+		expect( groups.map( ( g ) => g.id ) ).toEqual( [ 'modes' ] );
+		expect( groups[ 0 ].items.map( ( i ) => i.badge ) ).toEqual( [ '/help', '/user' ] );
 	} );
 } );
 

@@ -30,3 +30,14 @@ export function clearRecent() {
 		mw.storage.remove( KEY );
 	} catch ( e ) {}
 }
+
+/**
+ * Forget one recently visited page, keeping the rest in order.
+ *
+ * @param {string} title
+ */
+export function removeRecent( title ) {
+	try {
+		mw.storage.setObject( KEY, getRecent().filter( ( e ) => e.title !== title ) );
+	} catch ( e ) {}
+}

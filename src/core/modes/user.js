@@ -32,6 +32,7 @@ function userItem( u, profile ) {
 	return pageItem( mw.Title.makeTitle( 2, u.name ), {
 		label: u.name,
 		badge: '',
+		namespace: '',
 		icon: icons.user,
 		thumbnail: isRealAvatar( avatar ) ? { url: avatar } : undefined,
 		description: [

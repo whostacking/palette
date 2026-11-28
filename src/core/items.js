@@ -66,9 +66,16 @@ export function pageItem( title, extra ) {
 	if ( /\/change[ _]history$/i.test( prefixed ) ) {
 		return null;
 	}
-	const isFile = ns === mw.config.get( 'wgNamespaceIds' ).file;
+	// "Help:Guide" is shown as one label, with the namespace in its own span
+	const namespace = prefixed.slice( 0, prefixed.length - t.getMainText().length );
+	const ids = mw.config.get( 'wgNamespaceIds' ) || {};
+	const isFile = ns === ids.file;
 	// Audio files have no useful still image; show a speaker instead
 	const isAudio = isFile && /\.(?:mp3|ogg|oga|wav|flac|m4a|aac|opus)$/i.test( t.getMainText() );
+	// Direct "Category:" / "User:" searches should look like their dedicated
+	// modes: a tag for categories, an avatar for a user's root page.
+	const isCategory = ns === ids.category;
+	const isUserRoot = ns === ids.user && !t.getMainText().includes( '/' );
 	const actions = ns < 0 ? [] : [
 		{ id: 'edit', label: msg( 'tacp-action-edit' ), icon: icons.edit, url: t.getUrl( { action: 'edit' } ) },
 		{ id: 'history', label: msg( 'tacp-action-history' ), icon: icons.history, url: t.getUrl( { action: 'history' } ) }
@@ -76,12 +83,15 @@ export function pageItem( title, extra ) {
 	const item = Object.assign( {
 		id: 'page:' + prefixed,
 		label: ns === 0 ? prefixed : t.getMainText(),
-		badge: ns === 0 ? '' : mw.config.get( 'wgFormattedNamespaces' )[ ns ] || '',
+		badge: '',
+		namespace,
 		title: prefixed,
 		url: t.getUrl(),
 		icon: isAudio ? icons.volumeUp :
 			isFile ? icons.image :
-				ns < 0 ? icons.specialPages : icons.article,
+				isCategory ? icons.tag :
+					isUserRoot ? icons.user :
+						ns < 0 ? icons.specialPages : icons.article,
 		actions
 	}, extra );
 	if ( isFile && !isAudio && !item.thumbnail ) {

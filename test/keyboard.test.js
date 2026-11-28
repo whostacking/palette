@@ -12,7 +12,9 @@ describe( 'iOS keyboard seed', () => {
 		const seed = document.querySelector( '.tacp-keyboard-seed' );
 		expect( seed ).not.toBeNull();
 		expect( seed ).toBe( document.activeElement );
-		expect( seed.getAttribute( 'aria-hidden' ) ).toBe( 'true' );
+		// A focused element must not be aria-hidden, or assistive tech loses it
+		expect( seed.hasAttribute( 'aria-hidden' ) ).toBe( false );
+		expect( seed.getAttribute( 'aria-label' ) ).toBe( 'Search' );
 		expect( seed.tabIndex ).toBe( -1 );
 	} );
 

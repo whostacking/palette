@@ -171,19 +171,22 @@ describe( 'App', () => {
 		expect( document.querySelector( '[aria-live="assertive"]' ).textContent ).toBe( '' );
 	} );
 
-	it( 'opens the actions menu with > as well as ArrowRight', async () => {
+	it( 'shows a did-you-mean chip beside the input and applies it on click', async () => {
 		const registry = createRegistry( [] );
 		registry.register( defineMode( {
-			id: 'mygadget-actions', trigger: '/act', label: 'Actions', description: 'Actions',
-			getResults: () => [ { items: [ { id: 'x', label: 'X', run() {}, actions: [
-				{ id: 'e', label: 'Edit', run() {} }
-			] } ] } ]
+			id: 'mygadget-suggest', trigger: '/sug', label: 'Suggest', description: 'Suggest',
+			getResults: () => [ { items: [
+				{ id: 'suggestion', label: 'Did you mean "apple"?', query: 'apple' }
+			] } ]
 		} ) );
 		wrapper = mount( App, { props: { registry }, attachTo: document.body } );
-		const input = await openWith( '/act ' );
-		await key( input, '>' );
-		expect( document.querySelector( '[aria-live="assertive"]' ).textContent ).toBe( 'Edit, action 1 of 1' );
-		expect( input.value ).toBe( '' );
+		const input = await openWith( '/sug ' );
+		const chip = document.querySelector( '.tacp-suggestion' );
+		expect( chip.textContent.trim() ).toBe( 'apple' );
+		expect( document.querySelectorAll( '[role="option"]' ) ).toHaveLength( 0 );
+		chip.click();
+		await nextTick();
+		expect( input.value ).toBe( 'apple' );
 	} );
 
 	it( 'runs the first result when Enter was pressed before the palette loaded', async () => {
@@ -199,6 +202,19 @@ describe( 'App', () => {
 		const input = await openWith( '/fruit ' );
 		await key( input, 'Backspace' );
 		expect( document.querySelector( '.tacp-chip' ) ).toBe( null );
+	} );
+
+	it( 'Escape leaves a mode, then closes the palette', async () => {
+		setup();
+		const input = await openWith( '/fruit ' );
+		expect( document.querySelector( '.tacp-chip' ) ).not.toBe( null );
+
+		await key( input, 'Escape' );
+		expect( document.querySelector( '.tacp-chip' ) ).toBe( null );
+		expect( store.open ).toBe( true );
+
+		await key( input, 'Escape' );
+		expect( store.open ).toBe( false );
 	} );
 
 	it( 'lists modes after / and enters one with Enter', async () => {

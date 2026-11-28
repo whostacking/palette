@@ -94,6 +94,19 @@ describe( 'ResultItem', () => {
 		expect( observed[ observed.length - 1 ] ).toBe( after );
 	} );
 
+	it( 'renders the namespace as a bold span inside the label', () => {
+		const wrapper = mount( ResultItem, { props: {
+			id: 'x-0',
+			item: item( { namespace: 'Help:', query: undefined } )
+		} } );
+		const label = wrapper.find( '.tacp-item__label' );
+		const ns = label.find( '.tacp-item__namespace' );
+		expect( ns.exists() ).toBe( true );
+		expect( ns.text() ).toBe( 'Help:' );
+		expect( label.text() ).toBe( 'Help:Apple.jpg' );
+		expect( wrapper.find( '.tacp-item__badge' ).exists() ).toBe( false );
+	} );
+
 	it( 'bolds query words in the description', () => {
 		const wrapper = mount( ResultItem, { props: {
 			id: 'x-0',

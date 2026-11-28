@@ -8,7 +8,7 @@
 		@update:open="store.open = $event"
 	>
 		<template #header>
-			<div class="tacp-header">
+			<div class="tacp-header" @keyup.esc.stop>
 				<cdx-icon class="tacp-header__icon" :icon="icons.search"></cdx-icon>
 				<span v-if="currentMode" class="tacp-chip">
 					<span class="tacp-chip__label">{{ modeLabel }}</span>
@@ -39,6 +39,17 @@
 					@keydown="onKeydown"
 					@click="focusInput"
 				>
+				<button
+					v-if="suggestion"
+					type="button"
+					class="tacp-suggestion"
+					:title="msg( 'tacp-query-suggestion', suggestion )"
+					:aria-label="msg( 'tacp-query-suggestion', suggestion )"
+					@mousedown.prevent
+					@click="applySuggestion"
+				>
+					{{ suggestion }}
+				</button>
 				<cdx-button
 					class="tacp-header__close"
 					weight="quiet"
@@ -112,7 +123,7 @@
 				<span><kbd>↑</kbd><kbd>↓</kbd> {{ msg( 'tacp-hint-navigate' ) }}</span>
 				<span><kbd>↵</kbd> {{ msg( 'tacp-hint-open' ) }}</span>
 				<span v-if="activeItem && activeItem.actions.length">
-					<kbd>→</kbd><kbd>&gt;</kbd> {{ msg( 'tacp-hint-actions' ) }}
+					<kbd>→</kbd> {{ msg( 'tacp-hint-actions' ) }}
 				</span>
 				<span><kbd>esc</kbd> {{ msg( 'tacp-hint-close' ) }}</span>
 				<span><kbd>?</kbd> {{ msg( 'tacp-hint-help' ) }}</span>
@@ -157,6 +168,12 @@ function getContext() {
 function selectedText() {
 	const s = String( window.getSelection ? window.getSelection() : '' ).replace( /\s+/g, ' ' ).trim();
 	return s && s.length < MAX_PREFILL ? s : null;
+}
+
+// queryActions() supplies the "did you mean" item; it is shown as a chip in
+// the header rather than as a row in the list
+function isSuggestion( item ) {
+	return typeof item.id === 'string' && item.id.endsWith( ':suggestion' );
 }
 
 function remember( item ) {
@@ -242,10 +259,17 @@ export default defineComponent( {
 
 		const currentMode = computed( () => modeStack.value[ modeStack.value.length - 1 ] || null );
 		const modeLabel = computed( () => currentMode.value ? text( currentMode.value.label ) : '' );
+		const rawFlat = computed( () => groups.value.reduce(
+			( all, g ) => all.concat( g.items ), [] ) );
+		const suggestion = computed( () => {
+			const found = rawFlat.value.find( isSuggestion );
+			return found ? found.query : '';
+		} );
 		const view = computed( () => {
 			let index = 0;
 			return groups.value.map( ( g ) => {
-				const entries = g.items.map( ( item ) => {
+				const visible = g.items.filter( ( item ) => !isSuggestion( item ) );
+				const entries = visible.map( ( item ) => {
 					const i = index++;
 					return { item, index: i, domId: listId + '-' + i };
 				} );
@@ -261,8 +285,7 @@ export default defineComponent( {
 				return { id: g.id, label: g.label, columns };
 			} );
 		} );
-		const flat = computed( () => groups.value.reduce(
-			( all, g ) => all.concat( g.items ), [] ) );
+		const flat = computed( () => rawFlat.value.filter( ( item ) => !isSuggestion( item ) ) );
 		const activeItem = computed( () => flat.value[ activeIndex.value ] || null );
 		const activeDescendant = computed( () => {
 			if ( !activeItem.value ) {
@@ -329,6 +352,13 @@ export default defineComponent( {
 			loader.releaseKeyboard();
 		}
 
+		function applySuggestion() {
+			if ( suggestion.value ) {
+				query.value = suggestion.value;
+				focusInput();
+			}
+		}
+
 		function go( url ) {
 			close();
 			location.assign( url );
@@ -367,7 +397,12 @@ export default defineComponent( {
 		}
 
 		function runAction( action ) {
-			if ( action.run ) {
+			if ( action.id === 'remove-recent' ) {
+				// Removing a single recent page keeps the palette open and
+				// rebuilds the list without that row
+				action.run();
+				refresh();
+			} else if ( action.run ) {
 				close();
 				action.run();
 			} else if ( action.url ) {
@@ -455,13 +490,24 @@ export default defineComponent( {
 			}
 			const item = activeItem.value;
 			switch ( e.key ) {
+				case 'Escape':
+					// Codex closes the dialog on keyup at the backdrop, so the
+					// header stops that event. Leave a mode first, close on the
+					// next Escape when already searching the whole wiki.
+					e.preventDefault();
+					e.stopPropagation();
+					if ( modeStack.value.length ) {
+						popMode();
+					} else {
+						close();
+					}
+					break;
 				case 'ArrowDown':
 				case 'ArrowUp':
 					e.preventDefault();
 					move( e.key === 'ArrowDown' ? 1 : -1 );
 					break;
 				case 'ArrowRight':
-				case '>':
 					// Only once the caret is at the end, so the input stays editable
 					if ( item && activeAction.value < item.actions.length - 1 &&
 						e.target.selectionStart === e.target.value.length ) {
@@ -534,11 +580,12 @@ export default defineComponent( {
 		const modKey = /Mac|iPhone|iPad/.test( navigator.platform ) ? 'Command' : 'Control';
 
 		return {
-			store, icons, msg, input, query, listId, view, flat, activeIndex, activeAction,
+			store, icons, msg, input, query, listId, view, flat, suggestion,
+			activeIndex, activeAction,
 			activeItem, activeDescendant, resultsAnnouncement, actionAnnouncement,
 			currentMode, modeLabel,
 			placeholder, emptyState, modKey,
-			focusInput, popMode, hover, onClick, onKeydown, runAction
+			focusInput, applySuggestion, popMode, hover, onClick, onKeydown, runAction
 		};
 	}
 } );

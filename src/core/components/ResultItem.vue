@@ -33,7 +33,10 @@
 		</span>
 		<span class="tacp-item__text">
 			<span class="tacp-item__title">
-				<span class="tacp-item__label"><template
+				<span class="tacp-item__label"><span
+					v-if="item.namespace"
+					class="tacp-item__namespace"
+				>{{ item.namespace }}</span><template
 					v-for="( part, i ) in parts"
 					:key="i"><b v-if="part.match">
 						{{ part.text }}
@@ -63,8 +66,8 @@
 			<span class="tacp-item__metadata__label">{{ item.redirectFrom }}</span>
 		</span>
 		<span v-if="item.actions.length" class="tacp-item__actions">
-			<!-- Not focusable: reached with → or > from the input; inside an
-				option it would not be exposed anyway, so the palette announces it -->
+			<!-- Not focusable: reached with → from the input; inside an option it
+				would not be exposed anyway, so the palette announces it -->
 			<span
 				v-for="( action, i ) in item.actions"
 				:key="action.id"

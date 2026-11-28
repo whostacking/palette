@@ -2,7 +2,7 @@ import icons from './icons.js';
 import { msg, text, matches } from './text.js';
 import { pageItem, safeUrl } from './items.js';
 import { isAbort } from './services/api.js';
-import { getRecent } from './services/recent.js';
+import { getRecent, removeRecent } from './services/recent.js';
 import { searchTitles, searchText } from './providers/search.js';
 import { getSiteInfo } from './services/siteinfo.js';
 import { getRelated } from './providers/related.js';
@@ -125,6 +125,7 @@ export function normalizeGroups( groups, prefix ) {
 				label: str( it.label ),
 				description: str( it.description ),
 				badge: str( it.badge ),
+				namespace: str( it.namespace ),
 				redirectFrom: str( it.redirectFrom ),
 				title: str( it.title ),
 				icon: resolveIcon( it.icon ),
@@ -289,7 +290,21 @@ export function getGroups( { query, mode, context, registry }, signal ) {
 			.map( modeItem ) ) ] );
 	} else if ( !query.trim() ) {
 		pending = soft( getRelated( context, signal ) ).then( ( related ) => [
-			group( 'recent', getRecent().slice( 0, RECENT_SHOWN ).map( ( e ) => pageItem( e.title ) ).filter( Boolean ) ),
+			group( 'recent', getRecent().slice( 0, RECENT_SHOWN ).map( ( e ) => {
+				const item = pageItem( e.title );
+				if ( !item ) {
+					return null;
+				}
+				// Recent rows get a per-item trash action instead of a global
+				// "clear all" command in /help
+				item.actions = item.actions.concat( [ {
+					id: 'remove-recent',
+					label: msg( 'tacp-action-remove-recent' ),
+					icon: icons.trash,
+					run: () => removeRecent( e.title )
+				} ] );
+				return item;
+			} ).filter( Boolean ) ),
 			group( 'related', related )
 		] );
 	} else {
@@ -301,7 +316,8 @@ export function getGroups( { query, mode, context, registry }, signal ) {
 			const results = withRedirect( found, redirect );
 			const seen = new Set( results.map( ( it ) => it.title.toLowerCase() ) );
 			return [
-				group( 'results', exactFirst( results, q ) ),
+				// No heading: the typed query is already visible in the input
+				{ id: 'results', label: '', items: exactFirst( results, q ) },
 				group( 'fulltext', full.items.filter( ( it ) => !seen.has( it.title.toLowerCase() ) ) ),
 				group( 'commands', commands
 					.filter( ( c ) => matches( text( c.label ), query ) )

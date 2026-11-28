@@ -106,6 +106,31 @@
 	}
 }
 
+// "Did you mean" chip, beside the input in the header
+.tacp-suggestion {
+	display: inline-flex;
+	flex-shrink: 0;
+	align-items: center;
+	max-width: 40%;
+	padding: @spacing-25 @spacing-50;
+	border: 0;
+	border-radius: @border-radius-pill;
+	background-color: @background-color-interactive;
+	color: @color-base;
+	font-family: inherit;
+	font-size: @font-size-small;
+	line-height: @line-height-small;
+	overflow: hidden;
+	cursor: pointer;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+
+	&:hover {
+		background-color: @background-color-progressive-subtle;
+		color: @color-progressive;
+	}
+}
+
 .tacp-group {
 	padding-top: @spacing-50;
 
@@ -210,7 +235,8 @@
 		white-space: nowrap;
 	}
 
-	&__label b {
+	&__label b,
+	&__namespace {
 		font-weight: @font-weight-bold;
 	}
 
@@ -271,7 +297,8 @@
 		align-items: center;
 		height: 100%;
 		padding-left: @spacing-100;
-		background-image: linear-gradient( to right, transparent 30%, @background-color-base 70% );
+		/* stylelint-disable-next-line */
+		background-image: linear-gradient(to right,transparent 30%,var(--background-color-base, #fff) 70%);
 		opacity: 0;
 		pointer-events: none;
 		transform: translateX( 8px );
@@ -280,10 +307,6 @@
 		> * + * {
 			margin-left: @spacing-25;
 		}
-	}
-
-	&--active &__actions {
-		background-image: linear-gradient( to right, transparent 30%, @background-color-progressive-subtle 70% );
 	}
 
 	&--active &__actions,
@@ -364,7 +387,7 @@
 		border: @border-width-base solid @border-color-subtle;
 		border-radius: @border-radius-base;
 		background-color: @background-color-interactive-subtle;
-		font-family: inherit;
+		font-family: 'SFMono-Regular', 'SF Mono', 'Menlo', 'Consolas', 'Liberation Mono', monospace;
 		text-align: center;
 	}
 }
