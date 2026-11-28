@@ -8,7 +8,8 @@ function viaRest( query, signal ) {
 	return restGet( '/v1/search/title?limit=' + LIMIT + '&q=' + encodeURIComponent( query ), signal )
 		.then( ( data ) => data.pages.map( ( page ) => pageItem( page.title, {
 			description: page.description || '',
-			thumbnail: page.thumbnail && page.thumbnail.url ? { url: page.thumbnail.url, width: page.thumbnail.width } : null,
+			thumbnail: page.thumbnail && page.thumbnail.url ?
+				{ url: page.thumbnail.url, width: page.thumbnail.width } : null,
 			redirectFrom: page.matched_title || ''
 		} ) ) );
 }
@@ -28,13 +29,14 @@ function viaOpensearch( query, signal ) {
  * @return {Promise<Object[]>} Page items
  */
 export function searchTitles( query, signal ) {
-	const run = restBroken ? viaOpensearch( query, signal ) : viaRest( query, signal ).catch( ( err ) => {
-		if ( isAbort( err ) ) {
-			throw err;
-		}
-		restBroken = true;
-		return viaOpensearch( query, signal );
-	} );
+	const run = restBroken ? viaOpensearch( query, signal ) :
+		viaRest( query, signal ).catch( ( err ) => {
+			if ( isAbort( err ) ) {
+				throw err;
+			}
+			restBroken = true;
+			return viaOpensearch( query, signal );
+		} );
 	return run.then( ( items ) => items.filter( Boolean ) );
 }
 

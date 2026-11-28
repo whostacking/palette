@@ -43,8 +43,10 @@ export function isOpen() {
 loadMessages( __MESSAGES__, loader.config.messages, mw.language.getFallbackLanguageChain() );
 
 const registry = createRegistry( loader.config.disabledModes );
-[ nsMode, actionMode, sectionMode, langMode, userMode, categoryMode, historyMode, createHelpMode( registry ), aboutMode ]
-	.forEach( ( spec ) => registry.register( defineMode( spec ), true ) );
+[
+	nsMode, actionMode, sectionMode, langMode, userMode,
+	categoryMode, historyMode, createHelpMode( registry ), aboutMode
+].forEach( ( spec ) => registry.register( defineMode( spec ), true ) );
 builtinCommands.forEach( ( cmd ) => registry.register( cmd, true ) );
 
 watch( () => store.open, ( value ) => loader.setOpenState( value ) );

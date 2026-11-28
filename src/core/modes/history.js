@@ -42,7 +42,10 @@ export default {
 							id: 'diff',
 							label: msg( 'tacp-action-diff' ),
 							icon: icons.recentChanges,
-							url: mw.util.getUrl( context.title, { diff: r.revid, oldid: r.parentid } )
+							url: mw.util.getUrl( context.title, {
+								diff: r.revid,
+								oldid: r.parentid
+							} )
 						} ] : []
 					} ) )
 			} ];

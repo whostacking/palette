@@ -19,7 +19,11 @@ function readSections() {
 	const found = Array.from( document.querySelectorAll( HEADINGS ) ).map( ( h ) => {
 		const legacy = h.querySelector( '.mw-headline' );
 		const id = legacy ? legacy.id : h.id;
-		return id ? { h, id, level: Number( h.tagName.charAt( 1 ) ), label: clean( ( legacy || h ).textContent ) } : null;
+		return id ? {
+			h, id,
+			level: Number( h.tagName.charAt( 1 ) ),
+			label: clean( ( legacy || h ).textContent )
+		} : null;
 	} ).filter( ( s ) => s && s.label );
 	const top = Math.min.apply( null, found.map( ( s ) => s.level ) );
 	const counters = [];

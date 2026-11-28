@@ -29,7 +29,8 @@ mw.hook( 'tacp.register' ).add( ( tacp ) => {
 				.then( ( data ) => [ {
 					label: 'Watched pages',
 					items: data.watchlistraw
-						.filter( ( page ) => page.title.toLowerCase().includes( query.toLowerCase() ) )
+						.filter( ( page ) => page.title.toLowerCase()
+							.includes( query.toLowerCase() ) )
 						.map( ( page ) => ( {
 							id: page.title,
 							label: page.title,

@@ -44,6 +44,8 @@
 		margin-left: @spacing-50;
 	}
 
+	// Progressive enhancement: older Safari gets no focus tint, but no broken layout
+	/* stylelint-disable-next-line plugin/no-unsupported-browser-features */
 	&:has( .tacp-input:focus ) {
 		border-bottom-color: @border-color-progressive;
 	}
@@ -110,7 +112,6 @@
 	// Override the skin's label styling
 	/* stylelint-disable declaration-no-important */
 	&__label {
-		grid-area: label;
 		padding: @spacing-25 @spacing-100;
 		color: @color-subtle;
 		font-size: 90% !important;
@@ -119,6 +120,14 @@
 		text-transform: none !important;
 	}
 	/* stylelint-enable declaration-no-important */
+
+	// On wide screens the items are split into columns top-to-bottom so the
+	// flat result order matches what ArrowDown/ArrowUp do visually. Smaller
+	// screens render a single flat column instead (see App.vue TWO_COLUMNS).
+	&__columns {
+		display: flex;
+		flex-direction: column;
+	}
 }
 
 .tacp-item {
@@ -330,6 +339,8 @@
 		max-width: 55vw !important;
 	}
 
+	// Progressive enhancement: older Safari keeps its own scroll lock
+	/* stylelint-disable-next-line plugin/no-unsupported-browser-features */
 	body:has( .cdx-dialog-backdrop .tacp-palette ) {
 		overflow: auto !important;
 		padding-right: unset !important;
@@ -340,16 +351,21 @@
 	}
 
 	.tacp-group {
-		display: grid;
-		grid-template-columns: repeat( 2, minmax( 250px, 1fr ) );
-		grid-template-areas: 'label label';
 		max-width: 100% !important;
 	}
 
-	/* .tacp-group:not( :has( > .tacp-item:nth-child( 6 of .tacp-item ) ) ) {
-		grid-template-columns: repeat( 2, minmax( 250px, 1fr ) );
-		grid-template-areas: "label label";
-	} */
+	.tacp-group__columns {
+		flex-direction: row;
+	}
+
+	.tacp-group__column {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.tacp-group__column + .tacp-group__column {
+		margin-left: @spacing-100;
+	}
 }
 /* stylelint-enable declaration-no-important */
 
@@ -392,6 +408,8 @@
 }
 
 @media ( prefers-reduced-motion: reduce ) {
+	// Progressive enhancement: older Safari may still animate the fade
+	/* stylelint-disable-next-line plugin/no-unsupported-browser-features */
 	.cdx-dialog-fade-leave-active:has( > .tacp-palette ) {
 		transition: none;
 	}

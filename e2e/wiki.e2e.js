@@ -81,7 +81,9 @@ test( 'a page result is a link; Ctrl+click opens one new tab', async () => {
 	await page.waitForTimeout( 500 );
 	assert.equal( tabs.length, 1 );
 	// The palette stays open with the focus in the input
-	assert.equal( await page.evaluate( () => document.activeElement.className ), await palette( page ).evaluate( ( el ) => el.className ) );
+	const focusedClass = await page.evaluate( () => document.activeElement.className );
+	const paletteClass = await palette( page ).evaluate( ( el ) => el.className );
+	assert.equal( focusedClass, paletteClass );
 	await done( page );
 } );
 

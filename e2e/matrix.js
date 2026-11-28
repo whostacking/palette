@@ -37,6 +37,9 @@ async function check( page, opts ) {
 	if ( opts.night ) {
 		await page.evaluate( () => {
 			const html = document.documentElement;
+			// Possible classes on <html> after this assignment:
+			// * skin-theme-clientpref-night (the requested theme)
+			// * any other skin-theme-clientpref-* class the skin sets
 			html.className = html.className.replace( /skin-theme-clientpref-\w+/g, '' ) + ' skin-theme-clientpref-night';
 		} );
 	}

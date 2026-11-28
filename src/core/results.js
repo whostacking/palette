@@ -118,31 +118,35 @@ export function normalizeGroups( groups, prefix ) {
 		id: prefix + ':' + str( g.id || gi ),
 		label: str( g.label ),
 		// An item without a label would render as an empty row
-		items: ( Array.isArray( g.items ) ? g.items : [] ).filter( ( it ) => it && str( it.label ) ).map( ( it, ii ) => ( {
-			id: prefix + ':' + str( it.id || gi + '-' + ii ),
-			label: str( it.label ),
-			description: str( it.description ),
-			badge: str( it.badge ),
-			redirectFrom: str( it.redirectFrom ),
-			title: str( it.title ),
-			icon: resolveIcon( it.icon ),
-			iconUrl: safeUrl( it.iconUrl ),
-			thumbnail: it.thumbnail && safeUrl( it.thumbnail.url ) ? {
-				url: safeUrl( it.thumbnail.url ),
-				width: Number( it.thumbnail.width ) || 0
-			} : null,
-			url: safeUrl( it.url ),
-			run: typeof it.run === 'function' ? it.run : null,
-			mode: it.mode && typeof it.mode.getResults === 'function' ? it.mode : null,
-			query: typeof it.query === 'string' ? it.query : null,
-			actions: ( Array.isArray( it.actions ) ? it.actions : [] ).filter( Boolean ).map( ( a, ai ) => ( {
-				id: str( a.id || ai ),
-				label: str( a.label ),
-				icon: resolveIcon( a.icon ) || icons.next,
-				url: safeUrl( a.url ),
-				run: typeof a.run === 'function' ? a.run : null
-			} ) ).filter( ( a ) => a.url || a.run )
-		} ) )
+		items: ( Array.isArray( g.items ) ? g.items : [] )
+			.filter( ( it ) => it && str( it.label ) )
+			.map( ( it, ii ) => ( {
+				id: prefix + ':' + str( it.id || gi + '-' + ii ),
+				label: str( it.label ),
+				description: str( it.description ),
+				badge: str( it.badge ),
+				redirectFrom: str( it.redirectFrom ),
+				title: str( it.title ),
+				icon: resolveIcon( it.icon ),
+				iconUrl: safeUrl( it.iconUrl ),
+				thumbnail: it.thumbnail && safeUrl( it.thumbnail.url ) ? {
+					url: safeUrl( it.thumbnail.url ),
+					width: Number( it.thumbnail.width ) || 0
+				} : null,
+				url: safeUrl( it.url ),
+				run: typeof it.run === 'function' ? it.run : null,
+				mode: it.mode && typeof it.mode.getResults === 'function' ? it.mode : null,
+				query: typeof it.query === 'string' ? it.query : null,
+				actions: ( Array.isArray( it.actions ) ? it.actions : [] )
+					.filter( Boolean )
+					.map( ( a, ai ) => ( {
+						id: str( a.id || ai ),
+						label: str( a.label ),
+						icon: resolveIcon( a.icon ) || icons.next,
+						url: safeUrl( a.url ),
+						run: typeof a.run === 'function' ? a.run : null
+					} ) ).filter( ( a ) => a.url || a.run )
+			} ) )
 	} ) ).filter( ( g ) => g.items.length );
 }
 
@@ -163,7 +167,8 @@ export function exactFirst( items, query ) {
 		const other = title && mw.Title.newFromText( title );
 		return !!other && other.getPrefixedText().toLowerCase() === target;
 	};
-	const i = target ? items.findIndex( ( it ) => same( it.title ) || same( it.redirectFrom ) ) : -1;
+	const i = target ?
+		items.findIndex( ( it ) => same( it.title ) || same( it.redirectFrom ) ) : -1;
 	return i > 0 ? [ items[ i ] ].concat( items.slice( 0, i ), items.slice( i + 1 ) ) : items;
 }
 
@@ -261,7 +266,8 @@ export function getGroups( { query, mode, context, registry }, signal ) {
 	if ( query.charAt( 0 ) === '/' ) {
 		const token = query.slice( 1 ).trim().toLowerCase();
 		pending = Promise.resolve( [ group( 'commands', registry.getModes( context )
-			.filter( ( m ) => m.trigger.slice( 1 ).toLowerCase().indexOf( token ) === 0 || matches( text( m.label ), token ) )
+			.filter( ( m ) => m.trigger.slice( 1 ).toLowerCase().indexOf( token ) === 0 ||
+				matches( text( m.label ), token ) )
 			.map( modeItem ) ) ] );
 	} else if ( !query.trim() ) {
 		pending = soft( getRelated( context, signal ) ).then( ( related ) => [
@@ -271,7 +277,8 @@ export function getGroups( { query, mode, context, registry }, signal ) {
 	} else {
 		const q = query.trim();
 		pending = Promise.all( [
-			soft( searchTitles( q, signal ) ), userCanEdit(), fullText( q, signal ), redirectFor( q, signal )
+			soft( searchTitles( q, signal ) ), userCanEdit(),
+			fullText( q, signal ), redirectFor( q, signal )
 		] ).then( ( [ found, canEdit, full, redirect ] ) => {
 			const results = withRedirect( found, redirect );
 			const seen = new Set( results.map( ( it ) => it.title.toLowerCase() ) );

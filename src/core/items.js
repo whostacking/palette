@@ -75,7 +75,9 @@ export function pageItem( title, extra ) {
 		badge: ns === 0 ? '' : mw.config.get( 'wgFormattedNamespaces' )[ ns ] || '',
 		title: prefixed,
 		url: t.getUrl(),
-		icon: isAudio ? icons.volumeUp : isFile ? icons.image : ns < 0 ? icons.specialPages : icons.article,
+		icon: isAudio ? icons.volumeUp :
+			isFile ? icons.image :
+				ns < 0 ? icons.specialPages : icons.article,
 		actions
 	}, extra );
 	if ( isFile && !isAudio && !item.thumbnail ) {

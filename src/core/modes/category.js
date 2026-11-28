@@ -35,13 +35,15 @@ function members( name ) {
 				cmprop: 'title|type',
 				cmlimit: MEMBERS
 			}, signal ).then( ( data ) => {
-				const list = data.query.categorymembers.filter( ( m ) => matches( m.title, query ) );
+				const list = data.query.categorymembers
+					.filter( ( m ) => matches( m.title, query ) );
 				return [
 					{
 						id: 'subcats',
 						label: msg( 'tacp-group-subcategories' ),
 						items: list.filter( ( m ) => m.type === 'subcat' )
-							.map( ( m ) => categoryItem( mw.Title.newFromText( m.title ).getMainText() ) )
+							.map( ( m ) => categoryItem(
+								mw.Title.newFromText( m.title ).getMainText() ) )
 					},
 					{
 						id: 'pages',

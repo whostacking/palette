@@ -35,11 +35,17 @@
 			<span class="tacp-item__title">
 				<span class="tacp-item__label"><template
 					v-for="( part, i ) in parts"
-					:key="i"><b v-if="part.match">{{ part.text }}</b><template v-else>{{ part.text }}</template></template></span>
+					:key="i"><b v-if="part.match">
+						{{ part.text }}
+					</b><template v-else>
+						{{ part.text }}
+					</template></template></span>
 				<span v-if="item.badge" class="tacp-item__badge">{{ item.badge }}</span>
 			</span>
 			<span v-if="item.redirectFrom" class="tacp-item__redirect">{{ redirectText }}</span>
-			<span v-if="item.description" class="tacp-item__description">{{ item.description }}</span>
+			<span v-if="item.description" class="tacp-item__description">
+				{{ item.description }}
+			</span>
 		</span>
 		<span v-if="item.actions.length" class="tacp-item__actions">
 			<!-- Not focusable: reached with → from the input; inside an option it
@@ -60,7 +66,7 @@
 </template>
 
 <script>
-import { defineComponent, computed, ref, onMounted, onBeforeUnmount } from 'vue';
+import { defineComponent, computed, ref, watch, onMounted, onBeforeUnmount } from 'vue';
 import { CdxIcon, CdxThumbnail } from '@wikimedia/codex';
 import icons from '../icons.js';
 import { highlight, msg } from '../text.js';
@@ -86,12 +92,17 @@ export default defineComponent( {
 		// Storing the URL, not a boolean, resets the fallback when the row is reused.
 		const failedIconUrl = ref( null );
 		let observer = null;
-
 		let sharp = false;
+		// Rows are keyed by their position, so the same instance is reused for
+		// another item on every search. Ignore image loads from an older item.
+		let generation = 0;
 
-		function preload( url, isSharp ) {
+		function preload( url, isSharp, gen ) {
 			const img = new Image();
 			img.onload = () => {
+				if ( gen !== generation ) {
+					return;
+				}
 				// The plain thumbnail must not replace a sharper one that loaded first
 				if ( isSharp || !sharp ) {
 					sharp = sharp || isSharp;
@@ -104,16 +115,28 @@ export default defineComponent( {
 		// The thumbnail as given, then, on screens that need more pixels than
 		// it has (e.g. 60px at 2x), one at 40px × devicePixelRatio
 		function load() {
+			const gen = generation;
 			const { url, width } = props.item.thumbnail;
-			preload( url, false );
+			preload( url, false, gen );
 			if ( props.item.title && width && width < thumbWidth() ) {
-				sharpThumb( props.item.title )
-					.then( ( better ) => better && better !== url && preload( better, true ) );
+				sharpThumb( props.item.title ).then( ( better ) => {
+					if ( gen === generation && better && better !== url ) {
+						preload( better, true, gen );
+					}
+				} );
+			}
+		}
+
+		function invalidate() {
+			generation++;
+			if ( observer ) {
+				observer.disconnect();
+				observer = null;
 			}
 		}
 
 		// Lazy: only once the row is near the visible part of the list
-		onMounted( () => {
+		function start() {
 			if ( !props.item.thumbnail ) {
 				return;
 			}
@@ -124,22 +147,38 @@ export default defineComponent( {
 			observer = new IntersectionObserver( ( entries ) => {
 				if ( entries.some( ( e ) => e.isIntersecting ) ) {
 					observer.disconnect();
+					observer = null;
 					load();
 				}
 			}, { rootMargin: '100px' } );
 			observer.observe( root.value );
+		}
+
+		onMounted( start );
+		onBeforeUnmount( invalidate );
+
+		// A different result now occupies this row: drop the old image (and its
+		// failed-icon fallback) and load the new one, even though the instance
+		// itself is reused by Vue.
+		watch( () => props.item, () => {
+			invalidate();
+			thumbUrl.value = null;
+			failedIconUrl.value = null;
+			sharp = false;
+			start();
 		} );
-		onBeforeUnmount( () => observer && observer.disconnect() );
 
 		return {
 			root,
 			thumbUrl,
 			failedIconUrl,
 			defaultIcon: icons.article,
-			// Only items that open their url (App.vue activate()); modes, queries and commands do not
+			// Only items that open their url (App.vue activate()); modes,
+			// queries and commands do not
 			href: computed( () => {
 				const it = props.item;
-				return it.mode || ( it.query !== null && it.query !== undefined ) || it.run ? null : safeUrl( it.url );
+				return it.mode || ( it.query !== null && it.query !== undefined ) || it.run ?
+					null : safeUrl( it.url );
 			} ),
 			parts: computed( () => highlight( props.item.label, props.query ) ),
 			redirectText: computed( () => msg( 'tacp-redirected-from', props.item.redirectFrom ) )

@@ -33,14 +33,15 @@ function fromApi( articleId, signal ) {
 		pageids: articleId,
 		llprop: 'url|langname|autonym',
 		lllimit: 'max'
-	}, signal ).then( ( data ) => ( ( data.query.pages[ 0 ] || {} ).langlinks || [] ).map( ( l ) => ( {
-		id: l.lang,
-		label: l.autonym || l.langname || l.lang,
-		badge: l.lang,
-		description: l.title + ( l.langname ? ' – ' + l.langname : '' ),
-		icon: icons.language,
-		url: l.url
-	} ) ) );
+	}, signal ).then( ( data ) => ( ( data.query.pages[ 0 ] || {} ).langlinks || [] )
+		.map( ( l ) => ( {
+			id: l.lang,
+			label: l.autonym || l.langname || l.lang,
+			badge: l.lang,
+			description: l.title + ( l.langname ? ' – ' + l.langname : '' ),
+			icon: icons.language,
+			url: l.url
+		} ) ) );
 }
 
 export default {
@@ -52,7 +53,8 @@ export default {
 	isAvailable: ( context ) => context.articleId > 0 || !!document.querySelector( 'li.interlanguage-link' ),
 	getResults( query, context, signal ) {
 		const dom = readLanguageLinks();
-		const items = dom.length || context.articleId <= 0 ? Promise.resolve( dom ) : fromApi( context.articleId, signal );
+		const items = dom.length || context.articleId <= 0 ?
+			Promise.resolve( dom ) : fromApi( context.articleId, signal );
 		return items.then( ( list ) => [ {
 			id: 'languages',
 			label: msg( 'tacp-group-languages' ),

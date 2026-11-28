@@ -37,6 +37,7 @@
 					:aria-describedby="listId + '-hint'"
 					:placeholder="placeholder"
 					@keydown="onKeydown"
+					@click="focusInput"
 				>
 				<cdx-button
 					class="tacp-header__close"
@@ -62,21 +63,34 @@
 				role="group"
 				:aria-label="group.label || undefined"
 			>
-				<div v-if="group.label" class="tacp-group__label" aria-hidden="true">
+				<div
+					v-if="group.label"
+					class="tacp-group__label"
+					aria-hidden="true"
+				>
 					{{ group.label }}
 				</div>
-				<result-item
-					v-for="entry in group.entries"
-					:id="entry.domId"
-					:key="entry.domId"
-					:item="entry.item"
-					:query="query"
-					:active="entry.index === activeIndex"
-					:active-action="activeAction"
-					@hover="hover( entry.index )"
-					@activate="onClick( entry.item, $event )"
-					@action="runAction"
-				></result-item>
+				<div class="tacp-group__columns" role="presentation">
+					<div
+						v-for="( column, ci ) in group.columns"
+						:key="ci"
+						class="tacp-group__column"
+						role="presentation"
+					>
+						<result-item
+							v-for="entry in column"
+							:id="entry.domId"
+							:key="entry.domId"
+							:item="entry.item"
+							:query="query"
+							:active="entry.index === activeIndex"
+							:active-action="activeAction"
+							@hover="hover( entry.index )"
+							@activate="onClick( entry.item, $event )"
+							@action="runAction"
+						></result-item>
+					</div>
+				</div>
 			</div>
 		</div>
 		<!-- Screen readers: how to use the list, what it holds, which action is chosen -->
@@ -97,7 +111,9 @@
 			<div class="tacp-footer" aria-hidden="true">
 				<span><kbd>↑</kbd><kbd>↓</kbd> {{ msg( 'tacp-hint-navigate' ) }}</span>
 				<span><kbd>↵</kbd> {{ msg( 'tacp-hint-open' ) }}</span>
-				<span v-if="activeItem && activeItem.actions.length"><kbd>→</kbd> {{ msg( 'tacp-hint-actions' ) }}</span>
+				<span v-if="activeItem && activeItem.actions.length">
+					<kbd>→</kbd> {{ msg( 'tacp-hint-actions' ) }}
+				</span>
 				<span><kbd>esc</kbd> {{ msg( 'tacp-hint-close' ) }}</span>
 				<span><kbd>?</kbd> {{ msg( 'tacp-hint-help' ) }}</span>
 			</div>
@@ -106,7 +122,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, shallowRef, computed, watch, nextTick } from 'vue';
+import { defineComponent, ref, shallowRef, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import { CdxButton, CdxDialog, CdxIcon } from '@wikimedia/codex';
 import ResultItem from './components/ResultItem.vue';
 import store from './store.js';
@@ -119,6 +135,8 @@ import { addRecent } from './services/recent.js';
 
 const DEBOUNCE = 150;
 const MAX_PREFILL = 100;
+// Keep in sync with the two-column rules in styles.less
+const TWO_COLUMNS = 'screen and (min-width: 1119px)';
 
 function getContext() {
 	const c = mw.config;
@@ -168,20 +186,59 @@ export default defineComponent( {
 		// Enter pressed before the results for the current input arrived
 		let pendingEnter = null;
 
+		// Two columns only where there is room for them. On phones (and other
+		// narrow viewports) the rows stay in one flat list, in result order.
+		const wideScreen = ref( false );
+		let media = null;
+		function updateWide() {
+			wideScreen.value = !!media && media.matches;
+		}
+		onMounted( () => {
+			if ( typeof window.matchMedia !== 'function' ) {
+				return;
+			}
+			media = window.matchMedia( TWO_COLUMNS );
+			updateWide();
+			if ( media.addEventListener ) {
+				media.addEventListener( 'change', updateWide );
+			} else if ( media.addListener ) {
+				media.addListener( updateWide );
+			}
+		} );
+		onBeforeUnmount( () => {
+			if ( !media ) {
+				return;
+			}
+			if ( media.removeEventListener ) {
+				media.removeEventListener( 'change', updateWide );
+			} else if ( media.removeListener ) {
+				media.removeListener( updateWide );
+			}
+		} );
+
 		const currentMode = computed( () => modeStack.value[ modeStack.value.length - 1 ] || null );
 		const modeLabel = computed( () => currentMode.value ? text( currentMode.value.label ) : '' );
 		const view = computed( () => {
 			let index = 0;
-			return groups.value.map( ( g ) => ( {
-				id: g.id,
-				label: g.label,
-				entries: g.items.map( ( item ) => {
+			return groups.value.map( ( g ) => {
+				const entries = g.items.map( ( item ) => {
 					const i = index++;
 					return { item, index: i, domId: listId + '-' + i };
-				} )
-			} ) );
+				} );
+				// On wide screens fill each column top to bottom, then start the
+				// next one. The flat index stays in that same order, so
+				// ArrowDown/ArrowUp move down a column. Narrow screens get a
+				// single column with every item in result order.
+				const rows = wideScreen.value ? Math.ceil( entries.length / 2 ) : entries.length;
+				const columns = [];
+				for ( let i = 0; i < entries.length; i += rows ) {
+					columns.push( entries.slice( i, i + rows ) );
+				}
+				return { id: g.id, label: g.label, columns };
+			} );
 		} );
-		const flat = computed( () => groups.value.reduce( ( all, g ) => all.concat( g.items ), [] ) );
+		const flat = computed( () => groups.value.reduce(
+			( all, g ) => all.concat( g.items ), [] ) );
 		const activeItem = computed( () => flat.value[ activeIndex.value ] || null );
 		const activeDescendant = computed( () => {
 			if ( !activeItem.value ) {
@@ -217,7 +274,13 @@ export default defineComponent( {
 					query.value.trim() ? 'noresults' :
 						// A mode with nothing to list on this page, e.g. no other languages
 						currentMode.value ? 'modeempty' : 'empty';
-			const icon = { error: icons.alert, loading: icons.clock, noresults: icons.search, modeempty: icons.search, empty: icons.search }[ state ];
+			const icon = {
+				error: icons.alert,
+				loading: icons.clock,
+				noresults: icons.search,
+				modeempty: icons.search,
+				empty: icons.search
+			}[ state ];
 			return {
 				icon,
 				title: msg( 'tacp-state-' + state + '-title' ),
@@ -227,6 +290,14 @@ export default defineComponent( {
 
 		function close() {
 			store.open = false;
+		}
+
+		function focusInput() {
+			if ( input.value ) {
+				// A tap on the input is a user gesture: focusing here (instead
+				// of only from a timer) is what opens the keyboard on mobile.
+				input.value.focus();
+			}
 		}
 
 		function go( url ) {
@@ -242,9 +313,7 @@ export default defineComponent( {
 		function popMode() {
 			modeStack.value = modeStack.value.slice( 0, -1 );
 			query.value = '';
-			if ( input.value ) {
-				input.value.focus();
-			}
+			focusInput();
 		}
 
 		function activate( item, how ) {
@@ -293,7 +362,12 @@ export default defineComponent( {
 			}
 			const ctrl = controller = newController();
 			status.value = 'loading';
-			const state = { query: query.value, mode: currentMode.value, context, registry: props.registry };
+			const state = {
+				query: query.value,
+				mode: currentMode.value,
+				context,
+				registry: props.registry
+			};
 			timer = setTimeout( () => {
 				getGroups( state, ctrl.signal ).then( ( result ) => {
 					if ( ctrl.signal.aborted ) {
@@ -404,15 +478,17 @@ export default defineComponent( {
 				// Enter pressed while the core loaded: runs on the first results
 				pendingEnter = store.enter;
 				store.enter = null;
-				// After CdxDialog's own focus handling, which runs on nextTick
-				setTimeout( () => {
-					if ( input.value ) {
-						input.value.focus();
-						if ( fromSelection ) {
-							input.value.select();
-						}
+				const restoreFocus = ( select ) => {
+					focusInput();
+					if ( select && input.value ) {
+						input.value.select();
 					}
-				} );
+				};
+				// Focus on nextTick: that is still part of the opening user
+				// gesture, so the phone keyboard opens on the first tap.
+				nextTick( () => restoreFocus( fromSelection ) );
+				// Also once CdxDialog has finished its own nextTick focus handling
+				setTimeout( () => restoreFocus( fromSelection ) );
 				// Also when reopened with an unchanged query, which the watch above misses
 				refresh();
 			} else {
@@ -429,9 +505,10 @@ export default defineComponent( {
 
 		return {
 			store, icons, msg, input, query, listId, view, flat, activeIndex, activeAction,
-			activeItem, activeDescendant, resultsAnnouncement, actionAnnouncement, currentMode, modeLabel,
+			activeItem, activeDescendant, resultsAnnouncement, actionAnnouncement,
+			currentMode, modeLabel,
 			placeholder, emptyState, modKey,
-			popMode, hover, onClick, onKeydown, runAction
+			focusInput, popMode, hover, onClick, onKeydown, runAction
 		};
 	}
 } );

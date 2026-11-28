@@ -28,7 +28,8 @@ function namespaceSearch( ns, name ) {
 			// Special pages have no allpages; siteinfo also matches their aliases
 			const pages = ns === -1 ?
 				getSiteInfo().then( ( info ) => specialPageItems( info, q ) ) :
-				apiGet( params, signal ).then( ( data ) => ( data.query.prefixsearch || data.query.allpages || [] )
+				apiGet( params, signal ).then( ( data ) => ( data.query.prefixsearch ||
+					data.query.allpages || [] )
 					.map( ( p ) => pageItem( p.title ) ).filter( Boolean ) );
 			// Go to or create the typed title, as outside the namespace
 			const t = q && mw.Title.makeTitle( ns, q );
@@ -75,7 +76,13 @@ export default {
 			.filter( ( id ) => id >= -1 )
 			.map( ( id ) => {
 				const name = id === 0 ? msg( 'tacp-ns-main' ) : names[ id ];
-				return { id: String( id ), label: name, badge: String( id ), icon: icons.folder, mode: namespaceSearch( id, name ) };
+				return {
+					id: String( id ),
+					label: name,
+					badge: String( id ),
+					icon: icons.folder,
+					mode: namespaceSearch( id, name )
+				};
 			} )
 			.filter( ( item ) => matches( item.label, query ) );
 		return [ { id: 'namespaces', label: msg( 'tacp-group-namespaces' ), items } ];

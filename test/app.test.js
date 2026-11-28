@@ -51,6 +51,7 @@ afterEach( () => {
 	store.open = false;
 	wrapper.unmount();
 	document.body.innerHTML = '';
+	vi.unstubAllGlobals();
 } );
 
 describe( 'App', () => {
@@ -81,6 +82,71 @@ describe( 'App', () => {
 		expect( selected() ).toBe( 'Apple' );
 		await key( input, 'ArrowUp' );
 		expect( selected() ).toBe( 'Banana' );
+	} );
+
+	it( 'fills two columns top-to-bottom and moves down a column', async () => {
+		vi.stubGlobal( 'matchMedia', () => ( {
+			matches: true,
+			addEventListener() {},
+			removeEventListener() {}
+		} ) );
+		const registry = createRegistry( [] );
+		registry.register( defineMode( {
+			id: 'mygadget-many', trigger: '/many', label: 'Many', description: 'Many',
+			getResults: () => [ { items: Array.from( { length: 10 }, ( _, i ) => ( {
+				id: String( i ), label: 'Item ' + ( i + 1 ), run() {}
+			} ) ) } ]
+		} ) );
+		wrapper = mount( App, { props: { registry }, attachTo: document.body } );
+		const input = await openWith( '/many ' );
+		const columns = document.querySelectorAll( '.tacp-group__column' );
+		expect( columns.length ).toBe( 2 );
+		const labels = ( column ) => [ ...column.querySelectorAll( '[role="option"]' ) ]
+			.map( ( o ) => o.textContent.trim() );
+		expect( labels( columns[ 0 ] ) ).toEqual( [ 'Item 1', 'Item 2', 'Item 3', 'Item 4', 'Item 5' ] );
+		expect( labels( columns[ 1 ] ) ).toEqual( [ 'Item 6', 'Item 7', 'Item 8', 'Item 9', 'Item 10' ] );
+
+		const selected = () => document.querySelector( '[aria-selected="true"]' ).textContent.trim();
+		for ( let i = 0; i < 4; i++ ) {
+			await key( input, 'ArrowDown' );
+		}
+		expect( selected() ).toBe( 'Item 5' );
+		await key( input, 'ArrowDown' );
+		expect( selected() ).toBe( 'Item 6' );
+	} );
+
+	it( 'keeps one flat column in result order on narrow screens', async () => {
+		const registry = createRegistry( [] );
+		registry.register( defineMode( {
+			id: 'mygadget-narrow', trigger: '/narrow', label: 'Narrow', description: 'Narrow',
+			getResults: () => [ { items: Array.from( { length: 10 }, ( _, i ) => ( {
+				id: String( i ), label: 'Item ' + ( i + 1 ), run() {}
+			} ) ) } ]
+		} ) );
+		wrapper = mount( App, { props: { registry }, attachTo: document.body } );
+		const input = await openWith( '/narrow ' );
+		const columns = document.querySelectorAll( '.tacp-group__column' );
+		expect( columns.length ).toBe( 1 );
+		expect( [ ...columns[ 0 ].querySelectorAll( '[role="option"]' ) ]
+			.map( ( o ) => o.textContent.trim() ) ).toEqual( [
+			'Item 1', 'Item 2', 'Item 3', 'Item 4', 'Item 5',
+			'Item 6', 'Item 7', 'Item 8', 'Item 9', 'Item 10'
+		] );
+		const selected = () => document.querySelector( '[aria-selected="true"]' ).textContent.trim();
+		for ( let i = 0; i < 5; i++ ) {
+			await key( input, 'ArrowDown' );
+		}
+		expect( selected() ).toBe( 'Item 6' );
+	} );
+
+	it( 'focuses the input on tap so the phone keyboard opens', async () => {
+		setup();
+		const input = await openWith( '/fruit ' );
+		input.blur();
+		expect( document.activeElement ).not.toBe( input );
+		input.dispatchEvent( new MouseEvent( 'click', { bubbles: true } ) );
+		await nextTick();
+		expect( document.activeElement ).toBe( input );
 	} );
 
 	it( 'tells screen readers the result count and the chosen action', async () => {
