@@ -59,6 +59,11 @@
 					<cdx-icon :icon="icons.close"></cdx-icon>
 				</cdx-button>
 			</div>
+			<div
+				v-if="status === 'loading'"
+				class="tacp-loading"
+				aria-hidden="true"
+			></div>
 		</template>
 
 		<div
@@ -580,7 +585,7 @@ export default defineComponent( {
 		const modKey = /Mac|iPhone|iPad/.test( navigator.platform ) ? 'Command' : 'Control';
 
 		return {
-			store, icons, msg, input, query, listId, view, flat, suggestion,
+			store, icons, msg, input, query, status, listId, view, flat, suggestion,
 			activeIndex, activeAction,
 			activeItem, activeDescendant, resultsAnnouncement, actionAnnouncement,
 			currentMode, modeLabel,

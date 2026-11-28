@@ -35,4 +35,5 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 - Vue and the Codex components (`@wikimedia/codex`, GPL-2.0+) are served by MediaWiki core through ResourceLoader and loaded with `require()`. They are not part of TACP's files.
 - Codex design tokens (`@wikimedia/codex-design-tokens`, GPL-2.0+) are not a dependency. `src/styles/tokens.less` only names the tokens as CSS custom properties, with hand-written fallback values.
+- The loading progress line follows the pattern of Citizen's search progress bar (`StarCitizenTools/mediawiki-skins-Citizen`, GPL-3.0-or-later), reimplemented with TACP's tokens and keyframes.
 - The redirect metadata chip and the hover overlay of secondary actions follow the layout ideas used by the Citizen skin's command palette (`StarCitizenTools/mediawiki-skins-Citizen`, GPL-3.0-or-later). No CSS, markup or SVG was copied: TACP's versions use its own design tokens and the MIT-licensed Codex link icon, so they stay under TACP's MIT licence. The `@` shortcut entering user search follows the same feature idea as Citizen's user mode, implemented here on top of TACP's existing `/user` mode.

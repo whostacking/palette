@@ -204,6 +204,20 @@ describe( 'App', () => {
 		expect( document.querySelector( '.tacp-chip' ) ).toBe( null );
 	} );
 
+	it( 'shows a progress line while results are loading', async () => {
+		setup();
+		const input = await openWith( '/fruit ' );
+		expect( document.querySelector( '.tacp-loading' ) ).toBeNull();
+
+		input.value = 'an';
+		input.dispatchEvent( new Event( 'input' ) );
+		await nextTick();
+		expect( document.querySelector( '.tacp-loading' ) ).not.toBeNull();
+
+		await tick();
+		expect( document.querySelector( '.tacp-loading' ) ).toBeNull();
+	} );
+
 	it( 'Escape leaves a mode, then closes the palette', async () => {
 		setup();
 		const input = await openWith( '/fruit ' );
