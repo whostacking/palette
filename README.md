@@ -1,16 +1,17 @@
-<p align="center"><img src="docs/brand/logo.svg" alt="TACP" width="360"></p>
+<p align="center"><img src="docs/brand/logo.svg" alt="Keystroke" width="360"></p>
 
-# TACP: The Amazing Command Palette
+# Keystroke: The Amazing Command Palette
 
 A MediaWiki gadget that adds a keyboard-driven command palette to every skin
 except Citizen. Press Ctrl+K (Cmd+K on a Mac) or `/`, or tap the floating search button
 on a phone, to search pages, jump to recent pages, run page actions and browse
-namespaces, users, categories and page history.
+namespaces, users, categories and page history. It is a fork of
+[songnguxyz/tacp-gadget](https://github.com/songnguxyz/tacp-gadget).
 
 - Needs only MediaWiki core and the Gadgets extension: no PHP, no extension.
 - Supports every MediaWiki release mediawiki.org lists as supported
   (currently 1.43 LTS, 1.45 and 1.46). The oldest maintained LTS sets the floor:
-  when it reaches end of life, the next TACP release requires the next LTS, and
+  when it reaches end of life, the next Keystroke release requires the next LTS, and
   the browser baseline (build target, CSS) moves up to what that LTS runs
   JavaScript on.
 - Built from Codex, so it looks native to the skin, night mode included.
@@ -32,22 +33,32 @@ namespaces, users, categories and page history.
 | Backspace (empty input) | Leave the current mode |
 | `?` | Help: list every mode |
 
-Modes: `/ns`, `/action`, `/section` (or just `#`), `/lang` (or just `@`), `/user`,
-`/category`, `/history`, `/help`, `/about` (version, source, credits). Typing a namespace name and a colon, such as
-`Template:` or `Special:` (or a local name or alias the wiki accepts), turns it into a chip and
-searches only that namespace, like `/ns`; `{{` does the same for templates.
+| Mode | Shortcut | What it finds |
+|---|---|---|
+| `/ns` | `Namespace:`, `{{` | Pages in one namespace |
+| `/action` | `>` | Page actions and Special pages |
+| `/section` | — | Headings on this page |
+| `/user` | `@` | Users and their contributions |
+| `/category` | `#` | Categories and their members |
+| `/history` | — | Revisions of this page |
+| `/help` | `?` | Every available mode |
+| `/about` | — | Version, source and credits |
+
+Typing a namespace name and a colon, such as `Template:` or `Special:` (or a local
+name or alias the wiki accepts), turns it into a chip and searches only that
+namespace, like `/ns`.
 
 ## Trying it without installing
 
 Open any wiki page (MediaWiki 1.43 or later, not Citizen), paste the
 `mw.loader.load( … )` line from the CDN workflow's notice into the browser console
-and press Enter: TACP loads from jsDelivr and runs until the page is reloaded. It
+and press Enter: Keystroke loads from jsDelivr and runs until the page is reloaded. It
 does not start where the gadget is already on, nor on wikis whose Content
 Security Policy blocks `cdn.jsdelivr.net`.
 
 ## Installing on a wiki
 
-See [docs/deploy.md](docs/deploy.md). A wiki can also load TACP from jsDelivr with
+See [docs/deploy.md](docs/deploy.md). A wiki can also load Keystroke from jsDelivr with
 one line instead of installing the gadget: see
 [Loading from jsDelivr](docs/deploy.md#loading-from-jsdelivr). Site settings live in
 `MediaWiki:Gadget-TACP-config.json`:
@@ -57,7 +68,7 @@ one line instead of installing the gadget: see
 | `prefetch` | `false` | Load the palette during idle time on every page |
 | `slashShortcut` | `true` | Whether `/` opens the palette |
 | `mobileButton` | `true` | Whether the button is shown on narrow screens (not added when `searchTakeover` is on and the skin has its own phone search button) |
-| `searchTakeover` | `false` | The skin's search box opens TACP instead of its own dropdown |
+| `searchTakeover` | `false` | The skin's search box opens Keystroke instead of its own dropdown |
 | `disabledModes` | `[]` | Mode ids to hide, e.g. `[ "tacp-user" ]` |
 | `cargoLimit` | `50` | Row limit for Cargo queries (from v3) |
 | `messages` | `{}` | Message overrides by language, e.g. `{ "vi": { "tacp-placeholder": "…" } }` |
@@ -89,7 +100,7 @@ MW_DIR=/tmp/mw npm run e2e
 `dist/` is build output; never edit it or the wiki pages by hand. Every pull
 request that changes `src/` adds a line to [CHANGELOG.md](CHANGELOG.md).
 
-TACP is a clean-room implementation inspired by the Citizen skin's command
+Keystroke is a clean-room implementation inspired by the Citizen skin's command
 palette. Do not copy code, styles or messages from Citizen (GPL-3.0-or-later).
 
 ## Credits
@@ -99,7 +110,7 @@ that other gadgets add (such as Twinkle) are ideas from the command palette user
 scripts by Peter Coombe ([User:The wub](https://en.wikipedia.org/wiki/User:The_wub/commandPalette.js))
 and [User:DLynch (WMF)](https://meta.wikimedia.org/wiki/User:DLynch_(WMF)/CommandPalette.js),
 from the Wikimedia Hackathon 2026 project
-[T425060](https://phabricator.wikimedia.org/T425060). TACP reimplements them; no code
+[T425060](https://phabricator.wikimedia.org/T425060). Keystroke reimplements them; no code
 was copied.
 
 ## License

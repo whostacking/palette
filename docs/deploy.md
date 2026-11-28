@@ -1,4 +1,4 @@
-# Deploying TACP
+# Deploying Keystroke
 
 A release is made by pushing a tag `vX.Y.Z` (or `vX.Y.Z-rc.N`), or by running
 the Release workflow by hand with that tag (it then creates the tag on the chosen
@@ -28,11 +28,11 @@ running version can be read from the page itself.
   Create it from the release's defaults only when it is missing.
 - Verify `SHA256SUMS` before writing any page: `sha256sum -c SHA256SUMS`.
 - Edit summaries include the version and commit, e.g.
-  `TACP v0.1.0 (abc1234)`.
+  `Keystroke v0.1.0 (abc1234)`.
 
 ## Description in preferences
 
-Gadgets shows the message `MediaWiki:Gadget-TACP` as TACP's line in
+Gadgets shows the message `MediaWiki:Gadget-TACP` as Keystroke's line in
 *Special:Preferences → Gadgets*. The release ships it as these pages, `createOnly`
 (a wiki's own edits are never overwritten). Litmus takes at most 8 files per
 release, so `deploy.json` lists only the base page and `/vi`; create `/en` (or
@@ -52,7 +52,7 @@ the base page with text.
 
 ## Recommended bot setup
 
-TACP does not run a central deployer and never holds credentials for anyone's
+Keystroke does not run a central deployer and never holds credentials for anyone's
 wiki. Each wiki deploys with its own bot:
 
 1. A dedicated bot account, not a human account.
@@ -72,7 +72,7 @@ MediaWiki namespace).
 
 ## Loading from jsDelivr
 
-A wiki can load TACP from jsDelivr instead of installing the gadget, as scripts
+A wiki can load Keystroke from jsDelivr instead of installing the gadget, as scripts
 on the Miraheze Developers Wiki are loaded. The `cdn` workflow in
 `.github/workflows/cdn.yml` builds and commits the CDN files to the `cdn`
 branch on every push to `main` (or when run by hand). Its run log prints the
@@ -81,12 +81,12 @@ commit to paste:
 ```js
 // MediaWiki:Common.js (whole wiki), or Special:MyPage/common.js (yourself)
 window.tacpConfig = {}; // optional settings, same keys as Gadget-TACP-config.json
-mw.loader.load( 'https://cdn.jsdelivr.net/gh/whostacking/palette@<commit>/TACP-cdn.js' );
+mw.loader.load( 'https://cdn.jsdelivr.net/gh/whostacking/keystroke@<commit>/TACP-cdn.js' );
 ```
 
 Or as a gadget of one line: put the `mw.loader.load` line in
 `MediaWiki:Gadget-TACP.js` and define it without dependencies, e.g.
-`* TACP[ResourceLoader|default]|TACP.js`.
+`* Keystroke[ResourceLoader|default]|TACP.js`.
 
 - Pin the commit from the CDN workflow's notice. A commit's files never change,
   so nothing reaches the wiki until someone edits that line. To update, replace
@@ -108,7 +108,7 @@ Or as a gadget of one line: put the `mw.loader.load` line in
   `cdn.jsdelivr.net`. Readers' browsers fetch the files from jsDelivr, which
   sees their IP addresses; some wikis' policies ask for that to be disclosed.
 - Where the gadget or another copy already runs, the CDN build does not start.
-- To try TACP without installing anything, paste the `mw.loader.load` line into
+- To try Keystroke without installing anything, paste the `mw.loader.load` line into
   the browser console on any wiki page.
 
 ## Customizing
@@ -118,11 +118,11 @@ Or as a gadget of one line: put the `mw.loader.load` line in
 | Settings | `MediaWiki:Gadget-TACP-config.json` (jsDelivr: `window.tacpConfig`) |
 | Interface text | Its `messages` key, e.g. `{ "vi": { "tacp-placeholder": "…" } }`. `MediaWiki:Tacp-…` pages have no effect. |
 | Look | `MediaWiki:Common.css`, a skin's CSS page or your own gadget, using only the classes listed in [api.md](api.md#css-classes) |
-| Text excluded from "In page text" | `$wgExtractsRemoveClasses` in `LocalSettings.php`. TextExtracts does not send it to JavaScript, so also set `mw.config.set( 'wgExtractsRemoveClasses', … )` in `MediaWiki:Common.js` with the same list for TACP's own snippet filtering. |
+| Text excluded from "In page text" | `$wgExtractsRemoveClasses` in `LocalSettings.php`. TextExtracts does not send it to JavaScript, so also set `mw.config.set( 'wgExtractsRemoveClasses', … )` in `MediaWiki:Common.js` with the same list for Keystroke's own snippet filtering. |
 | Modes and commands | `MediaWiki:Common.js` or your own gadget, through the `tacp.register` hook ([api.md](api.md)) |
 
 Do not edit `MediaWiki:Gadget-TACP.js`, `Gadget-TACP.css`, `Gadget-TACP-core.js`
-or `Gadget-TACP-core.css`: each release overwrites them. A wiki that loads TACP
+or `Gadget-TACP-core.css`: each release overwrites them. A wiki that loads Keystroke
 from jsDelivr through its own gadget owns that gadget's pages, whatever its name.
 
 ## SongNgư.xyz wikis (Litmus)

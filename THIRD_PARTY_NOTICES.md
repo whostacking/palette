@@ -1,10 +1,10 @@
 # Third-party notices
 
-TACP bundles the following third-party code in its built files.
+Keystroke bundles the following third-party code in its built files.
 
 ## Codex icons
 
-Package: `@wikimedia/codex-icons` 1.14.0 (only the icon paths TACP uses, in `TACP-core.js`, plus the search icon in `TACP.js`). The article-redirect icon in the metadata chip is the Codex icon from Commons `File:Codex_icon_articleRedirect_(v2.6).svg`, under the same MIT licence.
+Package: `@wikimedia/codex-icons` 1.14.0 (only the icon paths Keystroke uses, in `TACP-core.js`, plus the search icon in `TACP.js`). The article-redirect icon in the metadata chip is the Codex icon from Commons `File:Codex_icon_articleRedirect_(v2.6).svg`, under the same MIT licence.
 
 ```
 MIT License
@@ -33,7 +33,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ## Not bundled
 
-- Vue and the Codex components (`@wikimedia/codex`, GPL-2.0+) are served by MediaWiki core through ResourceLoader and loaded with `require()`. They are not part of TACP's files.
+- Vue and the Codex components (`@wikimedia/codex`, GPL-2.0+) are served by MediaWiki core through ResourceLoader and loaded with `require()`. They are not part of Keystroke's files.
 - Codex design tokens (`@wikimedia/codex-design-tokens`, GPL-2.0+) are not a dependency. `src/styles/tokens.less` only names the tokens as CSS custom properties, with hand-written fallback values.
-- The loading progress line follows the pattern of Citizen's search progress bar (`StarCitizenTools/mediawiki-skins-Citizen`, GPL-3.0-or-later), reimplemented with TACP's tokens and keyframes.
-- The redirect metadata chip and the hover overlay of secondary actions follow the layout ideas used by the Citizen skin's command palette (`StarCitizenTools/mediawiki-skins-Citizen`, GPL-3.0-or-later). No CSS, markup or SVG was copied: TACP's versions use its own design tokens and the MIT-licensed Codex link icon, so they stay under TACP's MIT licence. The `@` shortcut entering user search follows the same feature idea as Citizen's user mode, implemented here on top of TACP's existing `/user` mode.
+- The loading progress line follows the pattern of Citizen's search progress bar (`StarCitizenTools/mediawiki-skins-Citizen`, GPL-3.0-or-later), reimplemented with Keystroke's tokens and keyframes.
+- The redirect metadata chip and the hover overlay of secondary actions follow the layout ideas used by the Citizen skin's command palette (`StarCitizenTools/mediawiki-skins-Citizen`, GPL-3.0-or-later). No CSS, markup or SVG was copied: Keystroke's versions use its own design tokens and the MIT-licensed Codex link icon, so they stay under Keystroke's MIT licence. The `@` shortcut entering user search follows the same feature idea as Citizen's user mode, implemented here on top of Keystroke's existing `/user` mode.

@@ -1,6 +1,6 @@
-# TACP public API
+# Keystroke public API
 
-Other gadgets add modes and commands to TACP through a hook. API version: **1**.
+Other gadgets add modes and commands to Keystroke through a hook. API version: **1**.
 
 ```js
 mw.hook( 'tacp.register' ).add( function ( tacp ) {
@@ -31,7 +31,7 @@ A complete example that registers a mode and a command is in
 | `register( item )` | Adds a mode or command. Returns `true` if it was added |
 | `defineMode( spec )` | Validates and normalises a mode; warns on unknown keys; returns `null` if invalid |
 | `defineCommand( spec )` | Same, for a single command |
-| `icons` | The Codex icons TACP bundles, e.g. `tacp.icons.reload` |
+| `icons` | The Codex icons Keystroke bundles, e.g. `tacp.icons.reload` |
 | `open( prefill? )`, `close()` | Programmatic control |
 
 `mw.hook( 'tacp.ready' )` fires right after `tacp.register`, with the same object.
@@ -44,8 +44,8 @@ A complete example that registers a mode and a command is in
 | `trigger` | ✔ | e.g. `/mygadget`; no spaces |
 | `label`, `description` | ✔ | Message keys or plain strings |
 | `getResults( query, context, signal )` | ✔ | Returns result groups, or a Promise of them; must honour `signal` (an `AbortSignal`) |
-| `layout` | | `list` (default). `gallery` is accepted but only takes effect from TACP v2 |
-| `getItemDetail( item, signal )` | | Accepted; used by the detail pane from TACP v2 |
+| `layout` | | `list` (default). `gallery` is accepted but only takes effect from Keystroke v2 |
+| `getItemDetail( item, signal )` | | Accepted; used by the detail pane from Keystroke v2 |
 | `icon` | | One of `tacp.icons`, shown in `/help` |
 | `isAvailable( context )` | | Return `false` to hide the mode on this page |
 
@@ -62,7 +62,7 @@ previous call's `signal` is aborted.
 | `label`, `description` | ✔ | Message keys or plain strings |
 | `run( context )` | ✔ | What the command does. The palette closes first |
 | `icon` | | One of `tacp.icons` (the object, or its name as a string) |
-| `confirm` | | `true` makes TACP ask the user before calling `run` |
+| `confirm` | | `true` makes Keystroke ask the user before calling `run` |
 | `isAvailable( context )` | | Return `false` to hide the command on this page |
 
 Commands appear when the typed text matches their label.
@@ -81,7 +81,7 @@ Commands appear when the typed text matches their label.
 		badge: 'Food',               // optional, small tag after the label
 		icon: tacp.icons.article,    // optional, ignored when thumbnail is set
 		iconUrl: '//upload.wikimedia.org/…', // optional image in the icon slot, instead of icon
-		thumbnail: { url: '…', width: 60 }, // optional; width (px) lets TACP fetch a sharper
+		thumbnail: { url: '…', width: 60 }, // optional; width (px) lets Keystroke fetch a sharper
 		                             // one for `title` on high-density screens
 		title: 'Apple',              // optional wiki page title: enables Shift+Enter (edit) and Recent
 		url: '/wiki/Apple',          // opened on Enter; Ctrl/Cmd+Enter opens a new tab
@@ -122,14 +122,14 @@ relative URLs are kept; any other `url` is dropped. Empty groups are hidden.
   `mw.log.warn` and the user sees nothing.
 - A gadget cannot override a built-in mode. Wikis hide built-in modes with `disabledModes` in
   `MediaWiki:Gadget-TACP-config.json`.
-- TACP itself never writes to the wiki. A registered `run()` may;
+- Keystroke itself never writes to the wiki. A registered `run()` may;
   that is your gadget's responsibility. Commands that change anything should set
   `confirm: true`.
-- Your results appear after TACP's own within the same group.
+- Your results appear after Keystroke's own within the same group.
 
 ## Timing
 
-- `tacp.register` fires when the TACP core loads, the first time the palette is
+- `tacp.register` fires when the Keystroke core loads, the first time the palette is
   opened in a page view (or earlier if the wiki turned on `prefetch`).
 - `mw.hook` remembers its last payload, so a gadget that loads later still
   receives `tacp.register`.
@@ -143,7 +143,7 @@ relative URLs are kept; any other `url` is dropped. Empty groups are hidden.
 
 ## Stability
 
-- The API follows semver through `apiVersion`. From TACP 1.0.0, TACP's major
+- The API follows semver through `apiVersion`. From Keystroke 1.0.0, Keystroke's major
   version equals `apiVersion`.
 - A deprecated member keeps working, with a `mw.log.warn`, for at least one minor
   release, and is removed only in the next major release.

@@ -30,9 +30,9 @@ Removed, Fixed. Every pull request that changes `src/` adds a line here.
 - Result icons sit in a 40px square, like thumbnails; they were 40px wide and only as tall as the icon.
 
 ### Added
-- `docs/deploy.md` says where a wiki changes TACP's settings, text, look and modes.
+- `docs/deploy.md` says where a wiki changes Keystroke's settings, text, look and modes.
 - `docs/api.md` lists the CSS classes wikis may style; they change only in a major release.
-- A line in the browser console says TACP is running, with its version and whether it came from the gadget or jsDelivr.
+- A line in the browser console says Keystroke is running, with its version and whether it came from the gadget or jsDelivr.
 
 ## 0.1.0-rc.11 — 2026-11-24
 
@@ -58,12 +58,12 @@ Removed, Fixed. Every pull request that changes `src/` adds a line here.
 - The "Copy link" action on page results; the link's own menu does it.
 
 ### Fixed
-- `TACP-cdn.js` loaded from a gadget named `TACP` did nothing: it took that gadget for TACP already running. Pasted into the console, it now says to use `mw.loader.load` instead of loading the core from the wiki.
+- `TACP-cdn.js` loaded from a gadget named `TACP` did nothing: it took that gadget for Keystroke already running. Pasted into the console, it now says to use `mw.loader.load` instead of loading the core from the wiki.
 
 ## 0.1.0-rc.9 — 2026-11-22
 
 ### Added
-- `TACP-cdn.js` and its files, committed by each release to the `cdn` branch: load TACP from jsDelivr with one line, settings in `window.tacpConfig` (docs/deploy.md).
+- `TACP-cdn.js` and its files, committed by each release to the `cdn` branch: load Keystroke from jsDelivr with one line, settings in `window.tacpConfig` (docs/deploy.md).
 - `{{` opens a template search, like `Template:`; a closing `}}` is ignored.
 
 ### Changed
@@ -73,7 +73,7 @@ Removed, Fixed. Every pull request that changes `src/` adds a line here.
 - Screen readers hear how to use the palette, the number of results, and the secondary action chosen with → (actions are no longer exposed as buttons inside options, where they were not read).
 
 ### Removed
-- `TACP-standalone.js`: to try TACP from the console, paste the one `mw.loader.load` line of `TACP-cdn.js` instead.
+- `TACP-standalone.js`: to try Keystroke from the console, paste the one `mw.loader.load` line of `TACP-cdn.js` instead.
 
 ### Fixed
 - Keys pressed while the palette first loads: Enter (also with Ctrl/Cmd or Shift) opens the first result for the typed text; Escape or the shortcut again cancels opening. They no longer reach the page.
@@ -85,7 +85,7 @@ Removed, Fixed. Every pull request that changes `src/` adds a line here.
 
 ### Added
 - `TACP-standalone.js` release asset: paste it into the browser console to try
-  TACP on any wiki without installing the gadget.
+  Keystroke on any wiki without installing the gadget.
 
 ## 0.1.0-rc.7 — 2026-10-30
 
@@ -145,7 +145,7 @@ the same changes.
 ### Changed
 - Search takeover also catches Vector 2022's sticky header search box and
   Minerva's search triggers by class. When it is on and the skin has its own
-  phone search button, TACP's floating button is not added.
+  phone search button, Keystroke's floating button is not added.
 
 ## 0.1.0-rc.3 — 2026-10-28
 
