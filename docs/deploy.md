@@ -118,6 +118,7 @@ Or as a gadget of one line: put the `mw.loader.load` line in
 | Settings | `MediaWiki:Gadget-TACP-config.json` (jsDelivr: `window.tacpConfig`) |
 | Interface text | Its `messages` key, e.g. `{ "vi": { "tacp-placeholder": "…" } }`. `MediaWiki:Tacp-…` pages have no effect. |
 | Look | `MediaWiki:Common.css`, a skin's CSS page or your own gadget, using only the classes listed in [api.md](api.md#css-classes) |
+| Text excluded from "In page text" | `$wgExtractsRemoveClasses` in `LocalSettings.php`. TextExtracts does not send it to JavaScript, so also set `mw.config.set( 'wgExtractsRemoveClasses', … )` in `MediaWiki:Common.js` with the same list for TACP's own snippet filtering. |
 | Modes and commands | `MediaWiki:Common.js` or your own gadget, through the `tacp.register` hook ([api.md](api.md)) |
 
 Do not edit `MediaWiki:Gadget-TACP.js`, `Gadget-TACP.css`, `Gadget-TACP-core.js`

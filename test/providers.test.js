@@ -49,6 +49,61 @@ describe( 'search provider', () => {
 		expect( items[ 0 ].description ).toBe( 'A flimsy wooden spoon' );
 	} );
 
+	it( 'removes wgExtractsRemoveClasses elements from a snippet', async () => {
+		mw.config.set( 'wgExtractsRemoveClasses', [ '.stub-notice' ] );
+		mockFetch( { 'list=search': { query: { search: [
+			{ title: 'Flimsy spoon', snippet: '<p class="stub-notice">This flimsy article is a stub.</p>A <span class="searchmatch">flimsy</span> wooden spoon' }
+		] } } } );
+		const { items } = await searchText( 'flimsy', new AbortController().signal );
+		expect( items ).toHaveLength( 1 );
+		expect( items[ 0 ].description ).toBe( 'A flimsy wooden spoon' );
+	} );
+
+	it( 'uses TextExtracts defaults when the config is not exposed to JS', async () => {
+		mockFetch( { 'list=search': { query: { search: [
+			{ title: 'Flimsy spoon', snippet: '<div class="noprint">Stub notice about flimsy things</div>A <span class="searchmatch">flimsy</span> spoon' }
+		] } } } );
+		const { items } = await searchText( 'flimsy', new AbortController().signal );
+		expect( items[ 0 ].description ).toBe( 'A flimsy spoon' );
+	} );
+
+	it( 'ignores an invalid selector in the wiki config', async () => {
+		mw.config.set( 'wgExtractsRemoveClasses', [ '[', '.stub-notice' ] );
+		mockFetch( { 'list=search': { query: { search: [
+			{ title: 'Flimsy spoon', snippet: '<p class="stub-notice">flimsy stub</p>A <span class="searchmatch">flimsy</span> spoon' }
+		] } } } );
+		const { items } = await searchText( 'flimsy', new AbortController().signal );
+		expect( items[ 0 ].description ).toBe( 'A flimsy spoon' );
+	} );
+
+	it( 'prefers the server-cleaned extract over the snippet', async () => {
+		const fetch = mockFetch( {
+			'list=search': { query: { search: [
+				{ title: 'Flimsy spoon', snippet: 'This flimsy article is a stub.' }
+			] } },
+			'prop=extracts': { query: { pages: [
+				{ title: 'Flimsy spoon', extract: 'A flimsy wooden spoon is useful.' }
+			] } }
+		} );
+		const { items } = await searchText( 'flimsy', new AbortController().signal );
+		expect( items[ 0 ].description ).toBe( 'A flimsy wooden spoon is useful.' );
+		const url = decodeURIComponent( fetch.mock.calls.find(
+			( c ) => c[ 0 ].includes( 'prop=extracts' ) )[ 0 ] );
+		expect( url ).toContain( 'explaintext=1' );
+		expect( url ).toContain( 'titles=Flimsy+spoon' );
+	} );
+
+	it( 'falls back to the snippet when extracts are unavailable', async () => {
+		mockFetch( {
+			'list=search': { query: { search: [
+				{ title: 'Flimsy spoon', snippet: 'A <span class="searchmatch">flimsy</span> wooden spoon' }
+			] } },
+			'prop=extracts': new Error( 'unsupported' )
+		} );
+		const { items } = await searchText( 'flimsy', new AbortController().signal );
+		expect( items[ 0 ].description ).toBe( 'A flimsy wooden spoon' );
+	} );
+
 	it( 'falls back to opensearch when rest.php fails', async () => {
 		mockFetch( {
 			'/rest.php/': new Error( '404' ),

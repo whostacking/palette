@@ -5,6 +5,22 @@ import { descriptionMatches } from '../text.js';
 const LIMIT = 10;
 let restBroken = false;
 
+// Mirrors TextExtracts' default $wgExtractsRemoveClasses. TextExtracts does
+// not expose that setting to JS, so a wiki that customises it also needs
+// mw.config.set( 'wgExtractsRemoveClasses', [ ... ] ) for the filtering below.
+const REMOVE_CLASSES = [
+	'table', 'div', 'figure', 'script', 'input', 'style', 'ul.gallery',
+	'mw\\:editsection', 'editsection', 'meta', 'sup.reference',
+	'ol.references', '.error', '.nomobile', '.noprint', '.noexcerpt', '.sortkey'
+];
+
+function removeSelectors() {
+	const configured = mw.config.get( 'wgExtractsRemoveClasses' );
+	const list = Array.isArray( configured ) ? configured :
+		typeof configured === 'string' ? configured.split( /\s+/ ) : REMOVE_CLASSES;
+	return list.filter( ( s ) => typeof s === 'string' && s );
+}
+
 function viaRest( query, signal ) {
 	return restGet( '/v1/search/title?limit=' + LIMIT + '&q=' + encodeURIComponent( query ), signal )
 		.then( ( data ) => data.pages.map( ( page ) => pageItem( page.title, {
@@ -43,12 +59,63 @@ export function searchTitles( query, signal ) {
 
 function plainText( html ) {
 	// DOMParser documents are inert: no scripts run, no images load
-	return new DOMParser().parseFromString( html, 'text/html' ).body.textContent;
+	const doc = new DOMParser().parseFromString( html, 'text/html' );
+	removeSelectors().forEach( ( selector ) => {
+		let found;
+		try {
+			found = doc.body.querySelectorAll( selector );
+		} catch ( e ) {
+			// A bad selector in the wiki's config must not break search.
+			return;
+		}
+		found.forEach( ( element ) => element.remove() );
+	} );
+	return doc.body.textContent;
 }
 
 /**
- * Full-text search through CirrusSearch: matching pages with a snippet, and
- * its "did you mean" suggestion.
+ * First-section extracts have $wgExtractsRemoveClasses applied on the server,
+ * so entries such as stub notices never reach the description. One batched
+ * request for all hits; without extracts (extension missing or API error) the
+ * caller falls back to the snippet. Aborts propagate.
+ *
+ * @param {Object[]} pages Search hits
+ * @param {AbortSignal} signal
+ * @return {Promise<Map>} Lowercased title to clean extract
+ */
+function extractsFor( pages, signal ) {
+	const titles = pages.map( ( page ) => page.title ).filter( Boolean );
+	if ( !titles.length ) {
+		return Promise.resolve( new Map() );
+	}
+	return apiGet( {
+		action: 'query',
+		prop: 'extracts',
+		explaintext: 1,
+		exintro: 1,
+		exchars: 200,
+		exlimit: 'max',
+		titles: titles.join( '|' )
+	}, signal ).then( ( data ) => {
+		const found = new Map();
+		const listed = ( data.query && data.query.pages ) || [];
+		listed.forEach( ( page ) => {
+			if ( typeof page.extract === 'string' && page.extract.trim() ) {
+				found.set( String( page.title ).toLowerCase(), page.extract.trim() );
+			}
+		} );
+		return found;
+	} ).catch( ( err ) => {
+		if ( isAbort( err ) ) {
+			throw err;
+		}
+		return new Map();
+	} );
+}
+
+/**
+ * Full-text search through CirrusSearch: matching pages with a clean extract
+ * (or snippet), and its "did you mean" suggestion.
  *
  * @param {string} query
  * @param {AbortSignal} signal
@@ -62,16 +129,20 @@ export function searchText( query, signal ) {
 		srlimit: 5,
 		srprop: 'snippet',
 		srinfo: 'suggestion'
-	}, signal ).then( ( data ) => ( {
-		items: data.query.search
-			.map( ( page ) => {
-				const description = plainText( page.snippet || '' );
-				// Keep only pages whose extract actually contains a word from
-				// the query; CirrusSearch may match text outside the snippet.
-				return descriptionMatches( description, query ) ?
-					pageItem( page.title, { description } ) : null;
-			} )
-			.filter( Boolean ),
-		suggestion: ( data.query.searchinfo && data.query.searchinfo.suggestion ) || ''
-	} ) );
+	}, signal ).then( ( data ) => {
+		const hits = ( data.query && data.query.search ) || [];
+		return extractsFor( hits, signal ).then( ( extracts ) => ( {
+			items: hits
+				.map( ( page ) => {
+					const description = extracts.get( page.title.toLowerCase() ) ||
+						plainText( page.snippet || '' );
+					// Keep only pages whose extract actually contains a word from
+					// the query; CirrusSearch may match text outside the snippet.
+					return descriptionMatches( description, query ) ?
+						pageItem( page.title, { description } ) : null;
+				} )
+				.filter( Boolean ),
+			suggestion: ( data.query.searchinfo && data.query.searchinfo.suggestion ) || ''
+		} ) );
+	} );
 }
