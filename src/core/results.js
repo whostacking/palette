@@ -223,21 +223,39 @@ function fullText( query, signal ) {
 		} );
 }
 
-export function queryActions( query, canEdit, suggestion ) {
+export function queryActions( query, canEdit, suggestion, hasResults ) {
 	const t = mw.Title.newFromText( query.trim() );
 	const items = [];
 	if ( suggestion ) {
 		items.push( { id: 'suggestion', label: msg( 'tacp-query-suggestion', suggestion ), icon: icons.search, query: suggestion } );
 	}
-	if ( t ) {
-		items.push( { id: 'go', label: msg( 'tacp-query-go', t.getPrefixedText() ), icon: icons.next, url: t.getUrl(), title: t.getPrefixedText() } );
-	}
-	items.push( {
+	const go = t ? {
+		id: 'go',
+		label: msg( 'tacp-query-go', t.getPrefixedText() ),
+		icon: icons.next,
+		url: t.getUrl(),
+		title: t.getPrefixedText()
+	} : null;
+	const fulltext = {
 		id: 'fulltext',
 		label: msg( 'tacp-query-fulltext', query.trim() ),
 		icon: icons.search,
 		url: mw.util.getUrl( 'Special:Search', { search: query.trim(), fulltext: '1' } )
-	} );
+	};
+	// When the typed title matched nothing, Enter should run the full-text
+	// search instead of opening a page that does not exist. Keep "Go to" as a
+	// secondary choice for anyone who did mean to create it.
+	if ( hasResults === false ) {
+		items.push( fulltext );
+		if ( go ) {
+			items.push( go );
+		}
+	} else {
+		if ( go ) {
+			items.push( go );
+		}
+		items.push( fulltext );
+	}
 	if ( t && canEdit && t.getNamespaceId() >= 0 ) {
 		items.push( { id: 'edit', label: msg( 'tacp-query-edit', t.getPrefixedText() ), icon: icons.edit, url: t.getUrl( { action: 'edit' } ) } );
 	}
@@ -288,7 +306,7 @@ export function getGroups( { query, mode, context, registry }, signal ) {
 				group( 'commands', commands
 					.filter( ( c ) => matches( text( c.label ), query ) )
 					.map( ( c ) => commandItem( c, context ) ) ),
-				group( 'query', queryActions( query, canEdit, full.suggestion ) )
+				group( 'query', queryActions( query, canEdit, full.suggestion, results.length > 0 ) )
 			];
 		} );
 	}

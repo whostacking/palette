@@ -37,6 +37,17 @@ describe( '/ns', () => {
 		expect( actions.items[ 0 ].title ).toBe( 'User:Alice' );
 	} );
 
+	it( 'offers full text first when the typed title has no page', async () => {
+		mockFetch( {
+			'list=prefixsearch': { query: { prefixsearch: [] } },
+			'list=allpages': { query: { allpages: [] } }
+		} );
+		const sub = nsMode.getResults( 'user' )[ 0 ].items[ 0 ].mode;
+		const [ pages, actions ] = await sub.getResults( 'missing', context, signal() );
+		expect( pages.items ).toEqual( [] );
+		expect( actions.items.map( ( i ) => i.id ) ).toEqual( [ 'fulltext', 'go', 'edit' ] );
+	} );
+
 	it( 'lists special pages from siteinfo, matching any alias', async () => {
 		mockFetch( { 'meta=siteinfo': siteinfo } );
 		const sub = nsMode.getResults( 'spec' )[ 0 ].items[ 0 ].mode;

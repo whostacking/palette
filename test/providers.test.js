@@ -111,6 +111,29 @@ describe( 'getGroups', () => {
 		] );
 	} );
 
+	it( 'makes full text the Enter action when a typed title has no page', async () => {
+		mockFetch( {
+			'/rest.php/v1/search/title': { pages: [] },
+			'action=opensearch': [ 'crystal bananas', [], [], [] ],
+			'list=search': { query: { search: [] } },
+			'list=allpages': { query: { allpages: [] } }
+		} );
+		const groups = await getGroups( {
+			query: 'Crystal Bananas', mode: null, context, registry: registry()
+		}, signal() );
+		const actions = groups[ 0 ].items;
+		// The first flat item is what Enter activates
+		expect( actions.map( ( i ) => i.label ) ).toEqual( [
+			'Search full text for "Crystal Bananas"',
+			'Go to "Crystal Bananas"',
+			'Create or edit "Crystal Bananas"'
+		] );
+		const searchUrl = decodeURIComponent( actions[ 0 ].url );
+		expect( searchUrl ).toContain( 'Special:Search' );
+		expect( searchUrl ).toContain( 'search=Crystal+Bananas' );
+		expect( searchUrl ).toContain( 'fulltext=1' );
+	} );
+
 	it( 'lists modes for a query starting with /', async () => {
 		const groups = await getGroups( { query: '/us', mode: null, context, registry: registry() }, signal() );
 		expect( groups[ 0 ].items[ 0 ] ).toMatchObject( { label: 'Users', badge: '/user' } );

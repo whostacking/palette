@@ -40,7 +40,7 @@ function namespaceSearch( ns, name ) {
 			}, {
 				id: 'query',
 				label: msg( 'tacp-group-query' ),
-				items: t ? queryActions( t.getPrefixedText(), canEdit ) : []
+				items: t ? queryActions( t.getPrefixedText(), canEdit, '', items.length > 0 ) : []
 			} ] );
 		}
 	};
