@@ -1,3 +1,3 @@
-# TACP 4d79203 for jsDelivr
+# TACP 0c91719 for jsDelivr
 
-Built files only: see https://github.com/whostacking/palette/blob/main/docs/deploy.md
+Built files only: see https://github.com/whostacking/keystroke/blob/main/docs/deploy.md
