@@ -65,7 +65,7 @@
 	"tacp-mode-user": "Name of a palette mode, shown in /help and in the mode chip.",
 	"tacp-mode-user-desc": "Description of the mode {{msg-tacp|tacp-mode-user}}, shown in /help. \"@\" is typed literally to enter the mode.",
 	"tacp-mode-category": "Name of a palette mode, shown in /help and in the mode chip.",
-	"tacp-mode-category-desc": "Description of the mode {{msg-tacp|tacp-mode-category}}, shown in /help.",
+	"tacp-mode-category-desc": "Description of the mode {{msg-tacp|tacp-mode-category}}, shown in /help. \"#\" is typed literally to enter the mode.",
 	"tacp-mode-section": "Name of a palette mode, shown in /help and in the mode chip.",
 	"tacp-mode-section-desc": "Description of the mode {{msg-tacp|tacp-mode-section}}, shown in /help. \"#\" is typed literally to enter the mode.",
 	"tacp-mode-lang": "Name of a palette mode, shown in /help and in the mode chip.",

@@ -63,7 +63,7 @@
 	"tacp-mode-user": "Thành viên",
 	"tacp-mode-user-desc": "Tìm thành viên, đóng góp và trang thảo luận của họ. Phím tắt: @",
 	"tacp-mode-category": "Thể loại",
-	"tacp-mode-category-desc": "Duyệt thể loại và các trang trong đó",
+	"tacp-mode-category-desc": "Duyệt thể loại và các trang trong đó. Phím tắt: #",
 	"tacp-mode-section": "Đề mục",
 	"tacp-mode-section-desc": "Nhảy tới một đề mục trong trang này. Phím tắt: #",
 	"tacp-mode-lang": "Ngôn ngữ",

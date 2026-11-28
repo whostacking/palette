@@ -149,6 +149,9 @@ describe( '/category', () => {
 				{ title: 'Category:Citrus', type: 'subcat' },
 				{ title: 'Apple', type: 'page' },
 				{ title: 'Banana', type: 'page' }
+			] } },
+			'prop=categoryinfo': { query: { pages: [
+				{ title: 'Category:Citrus', categoryinfo: { size: 7 } }
 			] } }
 		} );
 		const [ group ] = await categoryMode.getResults( 'fr', context, signal() );
@@ -157,6 +160,7 @@ describe( '/category', () => {
 		const [ subcats, pages ] = await group.items[ 0 ].mode.getResults( 'a', context, signal() );
 		expect( labels( subcats ) ).toEqual( [ 'Citrus' ] );
 		expect( labels( pages ) ).toEqual( [ 'Apple', 'Banana' ] );
+		expect( subcats.items[ 0 ].description ).toBe( '7 members' );
 		expect( subcats.items[ 0 ].mode ).toBeTruthy();
 	} );
 } );

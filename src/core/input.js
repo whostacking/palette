@@ -1,9 +1,9 @@
 import { namespaceForPrefix } from './modes/ns.js';
 
-// "#" jumps to a section, "@" searches users, ">" opens actions and Special
-// pages (as in Citizen's command palette). "#" comes from the command palette
-// user script by Peter Coombe (User:The wub), Wikimedia Hackathon 2026 (T425060).
-const ALIASES = { '#': 'tacp-section', '@': 'tacp-user', '>': 'tacp-action' };
+// "#" searches categories, "@" searches users, ">" opens actions and Special
+// pages (as in Citizen's command palette). The aliases came from the command
+// palette user script by Peter Coombe (User:The wub), Wikimedia Hackathon 2026 (T425060).
+const ALIASES = { '#': 'tacp-category', '@': 'tacp-user', '>': 'tacp-action' };
 
 /**
  * Detect a mode trigger typed at the start of the input, e.g. "/user al".

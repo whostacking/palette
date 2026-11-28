@@ -63,7 +63,7 @@
 	"tacp-mode-user": "Users",
 	"tacp-mode-user-desc": "Find users, their contributions and talk pages. Shortcut: @",
 	"tacp-mode-category": "Categories",
-	"tacp-mode-category-desc": "Browse categories and their members",
+	"tacp-mode-category-desc": "Browse categories and their members. Shortcut: #",
 	"tacp-mode-section": "Sections",
 	"tacp-mode-section-desc": "Jump to a section of this page. Shortcut: #",
 	"tacp-mode-lang": "Languages",

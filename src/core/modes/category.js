@@ -1,4 +1,4 @@
-import { apiGet } from '../services/api.js';
+import { apiGet, isAbort } from '../services/api.js';
 import { pageItem } from '../items.js';
 import icons from '../icons.js';
 import { msg, matches } from '../text.js';
@@ -14,6 +14,40 @@ function categoryItem( name, size ) {
 		description: size === undefined ? '' : msg( 'tacp-category-size', mw.language.convertNumber( size ), size ),
 		actions: [ { id: 'open', label: msg( 'tacp-action-open' ), icon: icons.article, url: t.getUrl() } ],
 		mode: members( t.getMainText() )
+	} );
+}
+
+/**
+ * Member counts for subcategories, which allcategories does not provide.
+ * One batched request; a failed lookup only leaves its subtitle empty.
+ *
+ * @param {string[]} names Category names without the namespace prefix
+ * @param {AbortSignal} signal
+ * @return {Promise<Map<string, number>>}
+ */
+function categorySizes( names, signal ) {
+	if ( !names.length ) {
+		return Promise.resolve( new Map() );
+	}
+	return apiGet( {
+		action: 'query',
+		prop: 'categoryinfo',
+		titles: names.map( ( name ) => mw.Title.makeTitle( 14, name ).getPrefixedText() ).join( '|' )
+	}, signal ).then( ( data ) => {
+		const found = new Map();
+		( ( data.query || {} ).pages || [] ).forEach( ( page ) => {
+			const categoryName = String( page.title || '' ).replace( /^[^:]+:/, '' );
+			const size = page.categoryinfo && page.categoryinfo.size;
+			if ( categoryName && typeof size === 'number' ) {
+				found.set( categoryName, size );
+			}
+		} );
+		return found;
+	} ).catch( ( err ) => {
+		if ( isAbort( err ) ) {
+			throw err;
+		}
+		return new Map();
 	} );
 }
 
@@ -37,20 +71,22 @@ function members( name ) {
 			}, signal ).then( ( data ) => {
 				const list = data.query.categorymembers
 					.filter( ( m ) => matches( m.title, query ) );
-				return [
-					{
+				const subcats = list.filter( ( m ) => m.type === 'subcat' )
+					.map( ( m ) => mw.Title.newFromText( m.title ).getMainText() );
+				return categorySizes( subcats, signal ).then( ( sizes ) => {
+					const subcatItems = subcats.map( ( subcatName ) => (
+						categoryItem( subcatName, sizes.get( subcatName ) )
+					) );
+					return [ {
 						id: 'subcats',
 						label: msg( 'tacp-group-subcategories' ),
-						items: list.filter( ( m ) => m.type === 'subcat' )
-							.map( ( m ) => categoryItem(
-								mw.Title.newFromText( m.title ).getMainText() ) )
-					},
-					{
+						items: subcatItems
+					}, {
 						id: 'pages',
 						label: msg( 'tacp-group-pages' ),
 						items: list.filter( ( m ) => m.type !== 'subcat' ).map( ( m ) => pageItem( m.title ) )
-					}
-				];
+					} ];
+				} );
 			} );
 		}
 	};

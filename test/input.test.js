@@ -17,13 +17,13 @@ describe( 'parseTrigger', () => {
 	it( 'enters a mode at once from a one-character alias', () => {
 		const withAliases = modes.concat(
 			{ id: 'tacp-section', trigger: '/section' }, { id: 'tacp-lang', trigger: '/lang' },
-			{ id: 'tacp-action', trigger: '/action' }
+			{ id: 'tacp-action', trigger: '/action' }, { id: 'tacp-category', trigger: '/category' }
 		);
-		expect( parseTrigger( '#hist', withAliases ) ).toEqual( { mode: withAliases[ 2 ], rest: 'hist' } );
-		// @ searches users and > opens actions / Special pages
+		// # searches categories, @ searches users and > opens actions / Special pages
+		expect( parseTrigger( '#fish', withAliases ) ).toEqual( { mode: withAliases[ 5 ], rest: 'fish' } );
 		expect( parseTrigger( '@ali', withAliases ) ).toEqual( { mode: withAliases[ 0 ], rest: 'ali' } );
 		expect( parseTrigger( '>special', withAliases ) ).toEqual( { mode: withAliases[ 4 ], rest: 'special' } );
-		expect( parseTrigger( '/action ', withAliases ) ).toEqual( { mode: withAliases[ 4 ], rest: '' } );
+		expect( parseTrigger( '/category ', withAliases ) ).toEqual( { mode: withAliases[ 5 ], rest: '' } );
 		// No alias when the mode is unavailable on this page
 		expect( parseTrigger( '#x', modes ) ).toBe( null );
 	} );
