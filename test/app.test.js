@@ -171,6 +171,21 @@ describe( 'App', () => {
 		expect( document.querySelector( '[aria-live="assertive"]' ).textContent ).toBe( '' );
 	} );
 
+	it( 'opens the actions menu with > as well as ArrowRight', async () => {
+		const registry = createRegistry( [] );
+		registry.register( defineMode( {
+			id: 'mygadget-actions', trigger: '/act', label: 'Actions', description: 'Actions',
+			getResults: () => [ { items: [ { id: 'x', label: 'X', run() {}, actions: [
+				{ id: 'e', label: 'Edit', run() {} }
+			] } ] } ]
+		} ) );
+		wrapper = mount( App, { props: { registry }, attachTo: document.body } );
+		const input = await openWith( '/act ' );
+		await key( input, '>' );
+		expect( document.querySelector( '[aria-live="assertive"]' ).textContent ).toBe( 'Edit, action 1 of 1' );
+		expect( input.value ).toBe( '' );
+	} );
+
 	it( 'runs the first result when Enter was pressed before the palette loaded', async () => {
 		const { run } = setup();
 		store.enter = 'open';

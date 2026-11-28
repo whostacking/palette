@@ -131,6 +131,7 @@
 }
 
 .tacp-item {
+	position: relative;
 	display: flex;
 	align-items: center;
 	min-height: @min-size-interactive-pointer;
@@ -230,12 +231,11 @@
 
 	// Redirect source shown beside the secondary actions, like a metadata
 	// chip. Written for TACP's tokens; not copied from Citizen (GPL-3.0).
+	// Always visible; the action buttons fade in over it on hover/focus,
+	// following the same overlay pattern as Citizen's command palette.
 	&__metadata {
 		display: flex;
 		flex-shrink: 0;
-		// The actions row is hidden until hover/focus, but this chip is
-		// information, not an action: show it for every result.
-		visibility: visible;
 		align-items: center;
 		padding: @spacing-12 @spacing-25;
 		border: @border-width-base solid @border-color-subtle;
@@ -259,19 +259,38 @@
 		}
 	}
 
+	// The buttons sit on top of the trailing end of the row (and the metadata
+	// chip when there is one). The fade hides what is underneath instead of
+	// pushing the label around. Styling is written for TACP's tokens, not
+	// copied from Citizen (GPL-3.0).
 	&__actions {
+		position: absolute;
+		top: 0;
+		inset-inline-end: @spacing-100;
 		display: flex;
-		flex-shrink: 0;
-		visibility: hidden;
+		align-items: center;
+		height: 100%;
+		padding-left: @spacing-100;
+		background-image: linear-gradient( to right, transparent 30%, @background-color-base 70% );
+		opacity: 0;
+		pointer-events: none;
+		transform: translateX( 8px );
+		transition: opacity @transition-duration-base, transform @transition-duration-base;
 
 		> * + * {
 			margin-left: @spacing-25;
 		}
 	}
 
+	&--active &__actions {
+		background-image: linear-gradient( to right, transparent 30%, @background-color-progressive-subtle 70% );
+	}
+
 	&--active &__actions,
 	&:hover &__actions {
-		visibility: visible;
+		opacity: 1;
+		pointer-events: auto;
+		transform: none;
 	}
 
 	&__action {
@@ -289,12 +308,6 @@
 		&--active {
 			outline: 2px solid @border-color-progressive;
 		}
-	}
-}
-
-@media ( hover: none ) {
-	.tacp-item__actions {
-		visibility: visible;
 	}
 }
 
@@ -430,9 +443,9 @@
 		display: none;
 	}
 
-	// No room for secondary actions on a narrow screen, but the redirect
-	// metadata stays visible (see ResultItem.vue)
-	.tacp-item__action {
+	// No room for a hover overlay on a narrow screen; the redirect metadata
+	// is a sibling of this container, so it stays visible (see ResultItem.vue)
+	.tacp-item__actions {
 		display: none;
 	}
 }
@@ -449,6 +462,10 @@
 	// Progressive enhancement: older Safari may still animate the fade
 	/* stylelint-disable-next-line plugin/no-unsupported-browser-features */
 	.cdx-dialog-fade-leave-active:has( > .tacp-palette ) {
+		transition: none;
+	}
+
+	.tacp-item__actions {
 		transition: none;
 	}
 }

@@ -6,7 +6,7 @@ import { normalizeConfig } from '../src/shared/config.js';
 import { loadMessages } from '../src/shared/messages.js';
 
 describe( 'parseTrigger', () => {
-	const modes = [ { trigger: '/user' }, { trigger: '/ns' } ];
+	const modes = [ { id: 'tacp-user', trigger: '/user' }, { trigger: '/ns' } ];
 
 	it( 'enters a mode once the trigger is followed by a space', () => {
 		expect( parseTrigger( '/user', modes ) ).toBe( null );
@@ -17,7 +17,9 @@ describe( 'parseTrigger', () => {
 	it( 'enters a mode at once from a one-character alias', () => {
 		const withAliases = modes.concat( { id: 'tacp-section', trigger: '/section' }, { id: 'tacp-lang', trigger: '/lang' } );
 		expect( parseTrigger( '#hist', withAliases ) ).toEqual( { mode: withAliases[ 2 ], rest: 'hist' } );
-		expect( parseTrigger( '@', withAliases ) ).toEqual( { mode: withAliases[ 3 ], rest: '' } );
+		// @ searches users now; languages remain reachable through /lang
+		expect( parseTrigger( '@ali', withAliases ) ).toEqual( { mode: withAliases[ 0 ], rest: 'ali' } );
+		expect( parseTrigger( '/lang ', withAliases ) ).toEqual( { mode: withAliases[ 3 ], rest: '' } );
 		// No alias when the mode is unavailable on this page
 		expect( parseTrigger( '#x', modes ) ).toBe( null );
 	} );

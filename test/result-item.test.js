@@ -105,7 +105,7 @@ describe( 'ResultItem', () => {
 		expect( bold.text() ).toBe( 'flimsy' );
 	} );
 
-	it( 'shows the redirect source beside, not above, the secondary actions', () => {
+	it( 'shows the redirect source before the actions overlay', () => {
 		const wrapper = mount( ResultItem, { props: {
 			id: 'x-0',
 			item: item( {
@@ -119,9 +119,9 @@ describe( 'ResultItem', () => {
 		expect( wrapper.find( '.tacp-item__redirect' ).exists() ).toBe( false );
 		const metadata = wrapper.find( '.tacp-item__metadata' );
 		expect( metadata.text() ).toBe( 'C$' );
-		const actions = wrapper.findAll( '.tacp-item__action' );
-		expect( actions ).toHaveLength( 2 );
-		expect( metadata.element.nextElementSibling ).toBe( actions[ 0 ].element );
+		const overlay = wrapper.find( '.tacp-item__actions' );
+		expect( overlay.findAll( '.tacp-item__action' ) ).toHaveLength( 2 );
+		expect( metadata.element.nextElementSibling ).toBe( overlay.element );
 	} );
 
 	it( 'shows the file image in the icon slot when iconUrl is set', () => {

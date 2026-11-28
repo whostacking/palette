@@ -112,7 +112,7 @@
 				<span><kbd>↑</kbd><kbd>↓</kbd> {{ msg( 'tacp-hint-navigate' ) }}</span>
 				<span><kbd>↵</kbd> {{ msg( 'tacp-hint-open' ) }}</span>
 				<span v-if="activeItem && activeItem.actions.length">
-					<kbd>→</kbd> {{ msg( 'tacp-hint-actions' ) }}
+					<kbd>→</kbd><kbd>&gt;</kbd> {{ msg( 'tacp-hint-actions' ) }}
 				</span>
 				<span><kbd>esc</kbd> {{ msg( 'tacp-hint-close' ) }}</span>
 				<span><kbd>?</kbd> {{ msg( 'tacp-hint-help' ) }}</span>
@@ -461,6 +461,7 @@ export default defineComponent( {
 					move( e.key === 'ArrowDown' ? 1 : -1 );
 					break;
 				case 'ArrowRight':
+				case '>':
 					// Only once the caret is at the end, so the input stays editable
 					if ( item && activeAction.value < item.actions.length - 1 &&
 						e.target.selectionStart === e.target.value.length ) {

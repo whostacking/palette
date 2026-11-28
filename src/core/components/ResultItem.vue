@@ -50,21 +50,21 @@
 					{{ part.text }}
 				</template></template></span>
 		</span>
-		<span v-if="item.actions.length || item.redirectFrom" class="tacp-item__actions">
-			<span
-				v-if="item.redirectFrom"
-				class="tacp-item__metadata"
-				:title="redirectText"
-			>
-				<cdx-icon
-					class="tacp-item__metadata__icon"
-					:icon="icons.link"
-					size="small"
-				></cdx-icon>
-				<span class="tacp-item__metadata__label">{{ item.redirectFrom }}</span>
-			</span>
-			<!-- Not focusable: reached with → from the input; inside an option it
-				would not be exposed anyway, so the palette announces it -->
+		<span
+			v-if="item.redirectFrom"
+			class="tacp-item__metadata"
+			:title="redirectText"
+		>
+			<cdx-icon
+				class="tacp-item__metadata__icon"
+				:icon="icons.link"
+				size="small"
+			></cdx-icon>
+			<span class="tacp-item__metadata__label">{{ item.redirectFrom }}</span>
+		</span>
+		<span v-if="item.actions.length" class="tacp-item__actions">
+			<!-- Not focusable: reached with → or > from the input; inside an
+				option it would not be exposed anyway, so the palette announces it -->
 			<span
 				v-for="( action, i ) in item.actions"
 				:key="action.id"
