@@ -319,10 +319,9 @@
 		}
 	}
 
-	// The buttons sit on top of the trailing end of the row (and the metadata
-	// chip when there is one). The fade hides what is underneath instead of
-	// pushing the label around. Styling is written for TACP's tokens, not
-	// copied from Citizen (GPL-3.0).
+	// The gradient sits on its own layer: it appears instantly while only the
+	// buttons slide and fade in. Written for TACP's tokens, not copied from
+	// Citizen (GPL-3.0).
 	&__actions {
 		position: absolute;
 		top: 0;
@@ -333,6 +332,13 @@
 		padding-left: @spacing-100;
 		/* stylelint-disable-next-line */
 		background-image: linear-gradient(to right,transparent 30%,var(--background-color-progressive-subtle, #f1f4fd) 70%);
+		pointer-events: none;
+		visibility: hidden;
+	}
+
+	&__buttons {
+		display: flex;
+		align-items: center;
 		opacity: 0;
 		pointer-events: none;
 		transform: translateX( 8px );
@@ -345,6 +351,11 @@
 
 	&--active &__actions,
 	&:hover &__actions {
+		visibility: visible;
+	}
+
+	&--active &__buttons,
+	&:hover &__buttons {
 		opacity: 1;
 		pointer-events: auto;
 		transform: none;

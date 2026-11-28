@@ -66,18 +66,21 @@
 			<span class="tacp-item__metadata__label">{{ item.redirectFrom }}</span>
 		</span>
 		<span v-if="item.actions.length" class="tacp-item__actions">
-			<!-- Not focusable: reached with → from the input; inside an option it
-				would not be exposed anyway, so the palette announces it -->
-			<span
-				v-for="( action, i ) in item.actions"
-				:key="action.id"
-				class="tacp-item__action"
-				:class="{ 'tacp-item__action--active': active && activeAction === i }"
-				:title="action.label"
-				aria-hidden="true"
-				@click.stop="$emit( 'action', action )"
-			>
-				<cdx-icon :icon="action.icon" size="small"></cdx-icon>
+			<span class="tacp-item__buttons">
+				<!-- Not focusable: reached with → from the input; inside an
+					option it would not be exposed anyway, so the palette
+					announces it -->
+				<span
+					v-for="( action, i ) in item.actions"
+					:key="action.id"
+					class="tacp-item__action"
+					:class="{ 'tacp-item__action--active': active && activeAction === i }"
+					:title="action.label"
+					aria-hidden="true"
+					@click.stop="$emit( 'action', action )"
+				>
+					<cdx-icon :icon="action.icon" size="small"></cdx-icon>
+				</span>
 			</span>
 		</span>
 	</component>

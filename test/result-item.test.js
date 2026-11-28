@@ -133,6 +133,7 @@ describe( 'ResultItem', () => {
 		const metadata = wrapper.find( '.tacp-item__metadata' );
 		expect( metadata.text() ).toBe( 'C$' );
 		const overlay = wrapper.find( '.tacp-item__actions' );
+		expect( overlay.find( '.tacp-item__buttons' ).exists() ).toBe( true );
 		expect( overlay.findAll( '.tacp-item__action' ) ).toHaveLength( 2 );
 		expect( metadata.element.nextElementSibling ).toBe( overlay.element );
 	} );
