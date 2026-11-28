@@ -233,6 +233,9 @@
 	&__metadata {
 		display: flex;
 		flex-shrink: 0;
+		// The actions row is hidden until hover/focus, but this chip is
+		// information, not an action: show it for every result.
+		visibility: visible;
 		align-items: center;
 		padding: @spacing-12 @spacing-25;
 		border: @border-width-base solid @border-color-subtle;
