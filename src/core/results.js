@@ -1,8 +1,9 @@
 import icons from './icons.js';
 import { msg, text, matches } from './text.js';
-import { pageItem, safeUrl } from './items.js';
+import { pageItem, safeUrl, thumbWidth } from './items.js';
 import { isAbort } from './services/api.js';
 import { getRecent, removeRecent } from './services/recent.js';
+import { sharpThumb } from './services/thumbs.js';
 import { searchTitles, searchText } from './providers/search.js';
 import { getSiteInfo } from './services/siteinfo.js';
 import { getRelated } from './providers/related.js';
@@ -202,6 +203,30 @@ function withRedirect( items, redirect ) {
 }
 
 /**
+ * A recently visited page: PageImages thumbnail when there is one, plus a
+ * trash action that forgets only this entry.
+ *
+ * @param {string} title
+ * @param {string|null} thumb
+ * @return {Object|null}
+ */
+function recentItem( title, thumb ) {
+	const item = pageItem( title, {
+		thumbnail: thumb ? { url: thumb, width: thumbWidth() } : null
+	} );
+	if ( !item ) {
+		return null;
+	}
+	item.actions = item.actions.concat( [ {
+		id: 'remove-recent',
+		label: msg( 'tacp-action-remove-recent' ),
+		icon: icons.trash,
+		run: () => removeRecent( title )
+	} ] );
+	return item;
+}
+
+/**
  * CirrusSearch full text, only when the wiki has it and the input is long enough.
  *
  * @param {string} query
@@ -289,22 +314,14 @@ export function getGroups( { query, mode, context, registry }, signal ) {
 				matches( text( m.label ), token ) )
 			.map( modeItem ) ) ] );
 	} else if ( !query.trim() ) {
-		pending = soft( getRelated( context, signal ) ).then( ( related ) => [
-			group( 'recent', getRecent().slice( 0, RECENT_SHOWN ).map( ( e ) => {
-				const item = pageItem( e.title );
-				if ( !item ) {
-					return null;
-				}
-				// Recent rows get a per-item trash action instead of a global
-				// "clear all" command in /help
-				item.actions = item.actions.concat( [ {
-					id: 'remove-recent',
-					label: msg( 'tacp-action-remove-recent' ),
-					icon: icons.trash,
-					run: () => removeRecent( e.title )
-				} ] );
-				return item;
-			} ).filter( Boolean ) ),
+		const recent = getRecent().slice( 0, RECENT_SHOWN );
+		pending = Promise.all( [
+			// One batched PageImages request gives recent rows the same page
+			// images as the Related group
+			Promise.all( recent.map( ( e ) => sharpThumb( e.title ).catch( () => null ) ) ),
+			soft( getRelated( context, signal ) )
+		] ).then( ( [ thumbs, related ] ) => [
+			group( 'recent', recent.map( ( e, i ) => recentItem( e.title, thumbs[ i ] ) ).filter( Boolean ) ),
 			group( 'related', related )
 		] );
 	} else {

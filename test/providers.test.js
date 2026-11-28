@@ -185,6 +185,22 @@ describe( 'getGroups', () => {
 		expect( groups[ 1 ].items.map( ( i ) => i.label ) ).toEqual( [ 'Rel' ] );
 	} );
 
+	it( 'gives recent pages their PageImages thumbnail', async () => {
+		clearRecent();
+		addRecent( 'Seen Image' );
+		mockFetch( {
+			'prop=pageimages': { query: { pages: [
+				{ title: 'Seen Image', thumbnail: { source: '//img/seen.jpg' } }
+			] } },
+			'meta=siteinfo': siteinfo,
+			morelike: { query: { pages: [] } }
+		} );
+		const groups = await getGroups( { query: '', mode: null, context, registry: registry() }, signal() );
+		expect( groups[ 0 ].items[ 0 ].thumbnail ).toEqual( {
+			url: 'http://img/seen.jpg', width: expect.any( Number )
+		} );
+	} );
+
 	it( 'gives each recent item a trash action that forgets only that page', async () => {
 		clearRecent();
 		addRecent( 'Seen one' );
