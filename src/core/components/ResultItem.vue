@@ -60,7 +60,7 @@
 		>
 			<cdx-icon
 				class="tacp-item__metadata__icon"
-				:icon="icons.link"
+				:icon="icons.articleRedirect"
 				size="small"
 			></cdx-icon>
 			<span class="tacp-item__metadata__label">{{ item.redirectFrom }}</span>
