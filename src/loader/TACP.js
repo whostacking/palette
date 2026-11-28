@@ -3,7 +3,11 @@ import { normalizeConfig } from '../shared/config.js';
 import { loadMessages } from '../shared/messages.js';
 import { shortcutFor, takeoverTarget, SKIN_SEARCH_BUTTON } from './shortcuts.js';
 import { cdxIconSearch } from '@wikimedia/codex-icons';
+import { primeKeyboard, releaseKeyboard } from './keyboard.js';
 import './TACP.less';
+
+// The core calls this once its own input has focus
+export { releaseKeyboard };
 
 // Codex search icon (MIT), shrunk to make room for a four-point sparkle
 const BUTTON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">' +
@@ -58,7 +62,8 @@ function fetchCdnCore() {
 		loadStylesheet( css ),
 		Promise.resolve( mw.loader.getScript( __CDN_BASE__ + 'TACP-cdn-core.js' ) )
 	] ).then( ( [ req ] ) => window.tacpCdnCore(
-		( name ) => ( name === 'ext.gadget.TACP' ? { config, open, close, setOpenState } : req( name ) )
+		( name ) => ( name === 'ext.gadget.TACP' ?
+			{ config, open, close, setOpenState, releaseKeyboard } : req( name ) )
 	) );
 }
 
@@ -99,6 +104,7 @@ function bufferKey( e ) {
 	if ( e.key === 'Escape' ) {
 		cancelled = true;
 		takeTyped();
+		releaseKeyboard();
 	} else if ( e.key === 'Enter' ) {
 		// Only with a query: on an empty palette the first item is a suggestion.
 		// Either way the key must not reach a focused link on the page.
@@ -148,9 +154,14 @@ export function open( prefill ) {
 		const text = ( prefill || '' ) + takeTyped();
 		enter = null;
 		cancelled = false;
-		return skip ? undefined : c.open( text || prefill, how || undefined );
+		if ( skip ) {
+			releaseKeyboard();
+			return undefined;
+		}
+		return c.open( text || prefill, how || undefined );
 	}, ( err ) => {
 		takeTyped();
+		releaseKeyboard();
 		throw err;
 	} );
 }
@@ -178,6 +189,7 @@ function toggle() {
 		// Pressed again while the core loads: cancel, as it would close
 		cancelled = true;
 		takeTyped();
+		releaseKeyboard();
 	} else if ( core && core.isOpen() ) {
 		core.close();
 	} else {
@@ -219,7 +231,11 @@ if ( enabled ) {
 			button.setAttribute( 'aria-label', mw.msg( 'tacp-loader-button' ) );
 			button.setAttribute( 'aria-keyshortcuts', 'Control+K Meta+K' + ( config.slashShortcut ? ' /' : '' ) );
 			button.innerHTML = BUTTON_SVG;
-			button.addEventListener( 'click', () => open().catch( noop ) );
+			button.addEventListener( 'click', () => {
+				// Must run synchronously in the tap for iOS to show the keyboard
+				primeKeyboard();
+				open().catch( noop );
+			} );
 			document.body.appendChild( button );
 		} );
 	}
@@ -236,6 +252,10 @@ if ( enabled ) {
 			}
 			e.preventDefault();
 			e.stopImmediatePropagation();
+			// The search box is prevented from taking focus, so nothing would
+			// open the phone keyboard. Do it here, in the gesture, for the
+			// first (async) load; the real input takes over when the core opens.
+			primeKeyboard();
 			if ( e.type === 'mousedown' ) {
 				// Keep focus (and the phone keyboard) out of the box; click opens
 				return;

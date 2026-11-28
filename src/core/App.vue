@@ -124,6 +124,7 @@
 <script>
 import { defineComponent, ref, shallowRef, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import { CdxButton, CdxDialog, CdxIcon } from '@wikimedia/codex';
+import * as loader from 'ext.gadget.TACP';
 import ResultItem from './components/ResultItem.vue';
 import store from './store.js';
 import icons from './icons.js';
@@ -293,11 +294,16 @@ export default defineComponent( {
 		}
 
 		function focusInput() {
-			if ( input.value ) {
-				// A tap on the input is a user gesture: focusing here (instead
-				// of only from a timer) is what opens the keyboard on mobile.
-				input.value.focus();
+			if ( !input.value ) {
+				return;
 			}
+			// A tap on the input is a user gesture: focusing here (instead of
+			// only from a timer) is what opens the keyboard on mobile.
+			input.value.focus();
+			// The loader may have focused a hidden input synchronously during
+			// the opening tap so iOS would show the keyboard before the core
+			// finished loading. The real input now owns it.
+			loader.releaseKeyboard();
 		}
 
 		function go( url ) {

@@ -6,6 +6,26 @@
 	display: none;
 }
 
+// Focusable, but invisible: iOS Safari raises the keyboard for a field focused
+// inside a gesture, so this stands in for the palette's input during the async
+// first load. display:none / visibility:hidden fields cannot be focused, and
+// 16px avoids iOS zooming the page when it is focused.
+.tacp-keyboard-seed {
+	position: fixed;
+	top: 0;
+	left: 0;
+	box-sizing: border-box;
+	width: 1px;
+	height: 1px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	opacity: 0;
+	/* stylelint-disable-next-line declaration-property-unit-disallowed-list -- iOS zooms on focus below 16px */
+	font-size: 16px;
+	pointer-events: none;
+}
+
 @media ( max-width: @max-width-breakpoint-mobile ) {
 	.tacp-mobile-button {
 		position: fixed;
