@@ -4,9 +4,10 @@ import { pageItem } from '../items.js';
 import icons from '../icons.js';
 import { msg } from '../text.js';
 
-// UserProfileV2: avatar and "about me", answered as query: [ { 'profile-avatar': … } ].
-// One request per user, as the extension has no batch query; a failure only
-// loses that user's profile.
+// UserProfileV2: action=query&list=queryuserprofilev2&user_name=<name> answers
+// query: [ { 'profile-avatar': …, 'profile-aboutme': … } ]. One request per
+// user, as the extension's only parameter is user_name; a failure only loses
+// that user's profile.
 // ponytail: up to 10 parallel requests per keystroke, batch if the extension gains one
 function getProfiles( users, signal ) {
 	return getSiteInfo().then( ( info ) => Promise.all( users.map( ( u ) => (
@@ -18,13 +19,21 @@ function getProfiles( users, signal ) {
 	) ) ), () => users.map( () => ( {} ) ) );
 }
 
+// queryuserprofilev2 always returns profile-avatar, but when a user has not
+// uploaded one it is the extension's bundled default.png. Treat that as "no
+// picture" so the Codex user icon is used instead of a generic placeholder.
+// Real avatars are named avatar_<id>.<ext>?r=<mtime>.
+function isRealAvatar( url ) {
+	return typeof url === 'string' && !!url && !/\/default\.png(?:[?#]|$)/i.test( url );
+}
+
 function userItem( u, profile ) {
 	const avatar = profile[ 'profile-avatar' ];
 	return pageItem( mw.Title.makeTitle( 2, u.name ), {
 		label: u.name,
 		badge: '',
 		icon: icons.user,
-		thumbnail: avatar ? { url: avatar } : undefined,
+		thumbnail: isRealAvatar( avatar ) ? { url: avatar } : undefined,
 		description: [
 			msg( 'tacp-user-edits', mw.language.convertNumber( u.editcount || 0 ), u.editcount || 0 ),
 			profile[ 'profile-aboutme' ]

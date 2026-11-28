@@ -118,6 +118,17 @@ describe( '/user', () => {
 		expect( group.items[ 0 ].actions.map( ( a ) => a.id ) ).toEqual( [ 'contribs', 'talk' ] );
 	} );
 
+	it( 'uses the Codex user icon when UserProfileV2 returns its default avatar', async () => {
+		mockFetch( {
+			'meta=siteinfo': siteinfo,
+			'list=allusers': { query: { allusers: [ { name: 'Alice', editcount: 1 } ] } },
+			'user_name=Alice': { query: [ { 'profile-avatar': '//static.wikitide.net/fischwiki/upv2avatars/default.png' } ] }
+		} );
+		const [ { items } ] = await userMode.getResults( 'ali', context, signal() );
+		expect( items[ 0 ].thumbnail ).toBeUndefined();
+		expect( items[ 0 ].icon ).toBe( tacpIcons.user );
+	} );
+
 	it( 'shows UserProfileV2 avatars and "about me"; a failed profile only loses its own', async () => {
 		mockFetch( {
 			'meta=siteinfo': siteinfo,
